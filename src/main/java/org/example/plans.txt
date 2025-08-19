@@ -1,7 +1,11 @@
 Needed Classes for Factory simulation:
 - work station
-- task/job
-- queue / conveyer belt
+- task/job (different levels of complexity)
+- queue / conveyor belt
 - scheduler / controller (controls which task goes to which WS)
 - some kind of goal manager (directs scheduler: which goal to focus
--
+- (Evaluation Module?)
+- Monitor/logs
+
+-> controlled system presented in a GUI Interface with possibly user guided tasks (MVP-Pattern for ease of implementation)
+-> design internal decision processes as abstract as possible for easier further development
