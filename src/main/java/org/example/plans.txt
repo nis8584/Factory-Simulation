@@ -1,0 +1,7 @@
+Needed Classes for Factory simulation:
+- work station
+- task/job
+- queue / conveyer belt
+- scheduler / controller (controls which task goes to which WS)
+- some kind of goal manager (directs scheduler: which goal to focus
+-
