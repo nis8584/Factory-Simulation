@@ -13,13 +13,15 @@ public class PostRunner extends Thread{
         this.eventBus = eventBus;
     }
 
+    @Override
     public void run(){
         while (true){
+            Random r = new Random();
             System.out.println("send message on eventbus");
-            eventBus.post(new BusMessage(new Random().nextInt(11)));
+            eventBus.post(new BusMessage(r.nextInt(11)));
             try {
-                int a = new Random().nextInt(5);
-                this.sleep(1000*a);
+                int a = r.nextInt(5);
+                Thread.sleep(1000L*a);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

@@ -5,8 +5,6 @@ import com.google.common.eventbus.Subscribe;
 
 public class MessageGetter {
 
-    private EventBus eventBus;
-
     public MessageGetter(EventBus eventBus){
         eventBus.register(this);
     }

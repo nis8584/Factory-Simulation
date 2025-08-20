@@ -1,0 +1,34 @@
+Needed Classes for Factory simulation:
+- work station
+- task/job (different levels of complexity)
+- queue / conveyor belt
+- scheduler / controller (controls which task goes to which WS)
+- some kind of goal manager (directs scheduler: which goal to focus)
+- (Evaluation Module?)
+- Monitor/logs
+
+-> controlled system presented in a GUI Interface with possibly user guided tasks (MVP-Pattern for ease of implementation)
+-> design internal decision processes as abstract as possible for easier further development
+
+workstation flow:
+
+when( active) wait for task;
+got task? -> wait for belt to bring task item;
+task item in front? -> do work;
+repeat;
+
+belt:
+
+when (active) move along;
+when (some WS is working) wait;
+repeat;
+
+scheduler:
+
+when (user generated task) put task in queue
+every x ms check if goal can be furthered by giving task to certain WS  -> broadcast task + WS responsible + put task item on belt
+
+goal manager:
+decide which goal to focus (cost, efficiency, high Utilization,...) in order to increase valuation (keep record of previous valuations and try to keep current v > average past v
+
+(Evaluation module: calculate current valuation, needs to collect data from WS: WS signals start and end of work?)
