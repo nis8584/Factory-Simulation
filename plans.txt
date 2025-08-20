@@ -1,4 +1,4 @@
-Needed Classes for Factory simulation:
+Needed Classes for factory simulation:
 - work station
 - task/job (different levels of complexity)
 - queue / conveyor belt
