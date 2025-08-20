@@ -4,6 +4,6 @@
 <?import javafx.scene.layout.*?>
 
 <AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="1200.0" prefWidth="1800.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="factory.GraphicsController">
-    <Label alignment="CENTER" prefHeight="800.0" prefWidth="1200.0" text="u i u a a ting tang walla walla bing bang" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+    <Label alignment="CENTER" prefHeight="800.0" prefWidth="1200.0" text="hallo welt" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
     </Label>
 </AnchorPane>
