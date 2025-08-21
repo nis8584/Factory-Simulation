@@ -99,5 +99,10 @@
             <version>21.0.8</version>
             <classifier>mac</classifier>
         </dependency>
+        <dependency>
+            <groupId>org.python</groupId>
+            <artifactId>jython-slim</artifactId>
+            <version>2.7.3b1</version>
+        </dependency>
     </dependencies>
 </project>
