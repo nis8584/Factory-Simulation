@@ -17,6 +17,7 @@ public class Factory {
     FactoryNode fn9 = new FactoryNode();
 
     public Factory() {
+        //todo make this into something that is loaded from a file at runtime -> parser?
         //individual connections and costs
         Map<FactoryNode, Integer> m1 = new HashMap<>();
         m1.put(fn2, 1);
@@ -65,7 +66,7 @@ public class Factory {
         fn7.setPosition("4,0");
         fn8.setPosition("2,0");
         fn9.setPosition("2,2");
-        System.out.println(FactoryNode.findPath(fn9,fn6,0).toString());
+        System.out.println(FactoryNode.findPath(fn2,fn9,0).toString());
     }
 
     public List<FactoryNode> getFactoryNodes(){

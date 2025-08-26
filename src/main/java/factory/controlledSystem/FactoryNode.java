@@ -32,7 +32,7 @@ public class FactoryNode {
                 "position='" + position + '\'' +
                 '}';
     }
-
+ //todo consider putting pathfinding in new class maybe also animation class?
     /**
      * Method to recursively find the cheapest path from one FactoryNode to another.
      *
@@ -73,7 +73,7 @@ public class FactoryNode {
                         costPath.add(from);
                         costPath.addAll(path);
                         int newCost = FactoryNode.costPerPath(costPath);
-                        if(path.size() == 1 || newCost == 0) break;
+                        if(path.isEmpty() || newCost == -1) break;
                         if(currentBestCost == -1){
                             currentBestCost = newCost;
                             currentBestPath = path;
@@ -100,7 +100,7 @@ public class FactoryNode {
     public static int costPerPath(LinkedList<FactoryNode> list){
         int cost = 0;
         int i = 0;
-        if(list == null) return 0;
+        if(list == null) return -1;
         for(FactoryNode node: list){
             if(node.equals(list.getLast())) break;
             FactoryNode nextNode = list.get(i+1);

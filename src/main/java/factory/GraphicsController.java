@@ -3,6 +3,7 @@ package factory;
 import factory.controlledSystem.Factory;
 import factory.controlledSystem.FactoryNode;
 import javafx.animation.PathTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -11,6 +12,8 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
@@ -37,10 +40,10 @@ public class GraphicsController implements Initializable {
     List<PathTransition> pathTransitions = new LinkedList<>();
 
     public void onButton(ActionEvent actionEvent){
-        pathTransitions.forEach(p->{
+        pathTransitions.forEach(p-> Platform.runLater(()->{
             p.getNode().setOpacity(100);
             p.play();
-        });
+        }));
     }
 
     /**
@@ -86,20 +89,29 @@ public class GraphicsController implements Initializable {
         gridPane.layout();
         anchorPane.layout();
 
+
+        //todo move this to new class AnimationCreation or smth
         //make sure that the positions are written correctly!
         FactoryNode from = stations.keySet().stream().filter(s -> s.getPosition().equals("0,2")).findFirst().get();
+
         FactoryNode to = stations.keySet().stream().filter(s -> s.getPosition().equals("4,2")).findFirst().get();
-        FactoryNode to2 = stations.keySet().stream().filter(s -> s.getPosition().equals("0,0")).findFirst().get();
+        FactoryNode to2 = stations.keySet().stream().filter(s -> s.getPosition().equals("0,4")).findFirst().get();
+        FactoryNode to3 = stations.keySet().stream().filter(s -> s.getPosition().equals("2,2")).findFirst().get();
+        FactoryNode to4 = stations.keySet().stream().filter(s -> s.getPosition().equals("2,4")).findFirst().get();
+        FactoryNode to5 = stations.keySet().stream().filter(s -> s.getPosition().equals("0,0")).findFirst().get();
 
         HashMap<FactoryNode, Color> endPoints = new HashMap<>();
         endPoints.put(to,Color.GREENYELLOW);
         endPoints.put(to2, Color.PEACHPUFF);
+        endPoints.put(to3, Color.RED );
+        endPoints.put(to4, Color.ROYALBLUE );
+        endPoints.put(to5, Color.BLACK );
         setUpCircleAnimations(from, endPoints);
 
 
 
     }
-
+    //todo move this to new class AnimationCreator or smth
     public void setUpCircleAnimations(FactoryNode from, HashMap<FactoryNode, Color> endPoints){
         for(FactoryNode node : endPoints.keySet()){
             Point2D screenCoordinates = stations.get(from).localToScene(0,0);
@@ -122,7 +134,7 @@ public class GraphicsController implements Initializable {
             pathTransition.setAutoReverse(false);
             pathTransition.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
             pathTransition.setCycleCount(1);
-            pathTransition.setDuration(Duration.millis(1000 * path.getElements().size()));
+            pathTransition.setDuration(Duration.millis(1000 * (path.getElements().size()-1)));
             pathTransition.setNode(circle);
             pathTransition.setPath(path);
             circle.setOpacity(0);
