@@ -45,7 +45,7 @@ public class Factory {
 
         Map<FactoryNode, Integer> m7 = new HashMap<>();
         m7.put(fn8, 1);
-        fn8.setNeighbors(m7);
+        fn7.setNeighbors(m7);
 
         Map<FactoryNode, Integer> m8 = new HashMap<>();
         m8.put(fn1, 1);
@@ -65,17 +65,11 @@ public class Factory {
         fn7.setPosition("4,0");
         fn8.setPosition("2,0");
         fn9.setPosition("2,2");
-        System.out.println(FactoryNode.findPath(fn2,fn1,0).toString());
-       /* LinkedList<FactoryNode> test = new LinkedList<>();
-        test.add(fn3);
-        test.add(fn4);
-        test.add(fn9);
-        System.out.println(FactoryNode.costPerPath(test));
-        */
+        System.out.println(FactoryNode.findPath(fn9,fn6,0).toString());
     }
 
     public List<FactoryNode> getFactoryNodes(){
-        List<FactoryNode> list = new LinkedList();
+        List<FactoryNode> list = new LinkedList<>();
         list.add(fn1);
         list.add(fn2);
         list.add(fn3);

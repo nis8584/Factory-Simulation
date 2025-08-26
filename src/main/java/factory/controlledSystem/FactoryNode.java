@@ -32,11 +32,19 @@ public class FactoryNode {
                 "position='" + position + '\'' +
                 '}';
     }
-//todo fix cost factor when looking for best path(currently takes path with least stops in between // also: fn2 to fn1 not working
+
+    /**
+     * Method to recursively find the cheapest path from one FactoryNode to another.
+     *
+     * @param from Starting point
+     * @param to End point
+     * @param previousIterations parameter used to limit recursion. use with 0.
+     * @return cheapest path from Node 'from' to 'to'
+     */
     public static LinkedList<FactoryNode> findPath(FactoryNode from, FactoryNode to, int previousIterations){
         LinkedList<FactoryNode> list = new LinkedList<>();
         // running too long?
-        if(previousIterations > 15) return null;
+        if(previousIterations > 100) return null;
         //already there?
         if(from.equals(to)){
             list.add(from);
@@ -50,7 +58,7 @@ public class FactoryNode {
                 FactoryNode nextNode =  from.neighbors.keySet().iterator().next();
                 //add to list and look from there
                 list.addAll(findPath(nextNode,to,previousIterations));
-            } else {
+            } else if(from.getNeighbors().size() > 1){
                 //multiple next possible
                 int currentBestCost = -1;
                 //check all possible next
@@ -59,9 +67,13 @@ public class FactoryNode {
                     //recursive call
                     LinkedList<FactoryNode> path = findPath(node, to, previousIterations+1);
                     //if not ran too long
-                    if(path != null){
+                    if(path != null && !(from.equals(path.getLast()))){
                         //if first path then write down cost
-                        int newCost = FactoryNode.costPerPath(path);
+                        LinkedList<FactoryNode> costPath = new LinkedList<>();
+                        costPath.add(from);
+                        costPath.addAll(path);
+                        int newCost = FactoryNode.costPerPath(costPath);
+                        if(path.size() == 1 || newCost == 0) break;
                         if(currentBestCost == -1){
                             currentBestCost = newCost;
                             currentBestPath = path;
@@ -71,7 +83,6 @@ public class FactoryNode {
                             currentBestCost = newCost;
                             currentBestPath = path;
                         }
-                        if(path.size() == 1) break;
                     }
                 }
                 if(!currentBestPath.isEmpty()){
@@ -80,14 +91,23 @@ public class FactoryNode {
             }
         return list;
     }
+
+    /**
+     * calculates the cost of a given path of FactoryNodes
+     * @param list LinkedList of FactoryNodes
+     * @return Integer cost to 'walk' the given path
+     */
     public static int costPerPath(LinkedList<FactoryNode> list){
         int cost = 0;
+        int i = 0;
         if(list == null) return 0;
         for(FactoryNode node: list){
             if(node.equals(list.getLast())) break;
-            FactoryNode nextNode = list.get(list.indexOf(node)+1);
+            FactoryNode nextNode = list.get(i+1);
+            i++;
             cost += node.neighbors.get(nextNode);
         }
         return cost;
     }
+
 }

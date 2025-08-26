@@ -25,18 +25,22 @@ public class GraphicsController implements Initializable {
     private ListView<String> logView;
     @FXML
     GridPane gridPane;
+    @FXML
+    AnchorPane anchorPane;
 
     private Map<FactoryNode, Rectangle> stations = new HashMap<>();
 
     private ObservableList<String> logList = FXCollections.observableArrayList();
 
     private Factory factory = new Factory();
-    PathTransition pathTransition;
-    PathTransition pathTransition2;
+
+    List<PathTransition> pathTransitions = new LinkedList<>();
 
     public void onButton(ActionEvent actionEvent){
-        pathTransition.play();
-        pathTransition2.play();
+        pathTransitions.forEach(p->{
+            p.getNode().setOpacity(100);
+            p.play();
+        });
     }
 
     /**
@@ -50,7 +54,7 @@ public class GraphicsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle){
         // Source: https://stackoverflow.com/questions/53493111/javafx-wrapping-text-in-listview
-        logView.setCellFactory(param -> new ListCell<String>(){
+        logView.setCellFactory(param -> new ListCell<>(){
             @Override
             protected void updateItem(String item, boolean empty){
                 super.updateItem(item,empty);
@@ -72,67 +76,61 @@ public class GraphicsController implements Initializable {
         logView.setItems(logList);
         List<FactoryNode> list = factory.getFactoryNodes();
         for(FactoryNode node : list){
-            Rectangle rectangle = new Rectangle(20,20, Color.RED);
+            Rectangle rectangle = new Rectangle(25,25, Color.RED);
             int col = Integer.parseInt(String.valueOf(node.getPosition().charAt(0)));
             int row = Integer.parseInt(String.valueOf(node.getPosition().charAt(2)));
             stations.put(node, rectangle);
             gridPane.add(rectangle,col,row);
         }
-        AnchorPane aP = (AnchorPane) gridPane.getParent();
 
         gridPane.layout();
-        aP.layout();
+        anchorPane.layout();
 
-
+        //make sure that the positions are written correctly!
         FactoryNode from = stations.keySet().stream().filter(s -> s.getPosition().equals("0,2")).findFirst().get();
         FactoryNode to = stations.keySet().stream().filter(s -> s.getPosition().equals("4,2")).findFirst().get();
         FactoryNode to2 = stations.keySet().stream().filter(s -> s.getPosition().equals("0,0")).findFirst().get();
-        //todo make this into a loop with x possible ending points
-        Point2D screenCoordinates = stations.get(from).localToScene(0,0);
-        Circle circle1 = new Circle();
-        Circle circle2 = new Circle();
-        circle1.setCenterX(screenCoordinates.getX());
-        circle1.setCenterY(screenCoordinates.getY());
-        circle1.setRadius(20);
-        circle1.setFill(Color.GREENYELLOW);
-        circle2.setCenterX(screenCoordinates.getX());
-        circle2.setCenterY(screenCoordinates.getY());
-        circle2.setRadius(20);
-        circle2.setFill(Color.PEACHPUFF);
 
-        Path path1 = new Path();
-        MoveTo moveTo = new MoveTo(screenCoordinates.getX(),screenCoordinates.getY());
-        List<FactoryNode> pathNodes = FactoryNode.findPath(from,to,0);
-        path1.getElements().add(moveTo);
-        for(FactoryNode n : pathNodes){
-            Point2D tempCoordinates = stations.get(n).localToScene(0,0);
-            path1.getElements().add(new LineTo(tempCoordinates.getX(),tempCoordinates.getY()));
-        }
-        Path path2 = new Path();
-        MoveTo moveTwo = new MoveTo(screenCoordinates.getX(),screenCoordinates.getY());
-        List<FactoryNode> pathNodes2 = FactoryNode.findPath(from,to2,0);
-        path2.getElements().add(moveTwo);
-        for(FactoryNode n : pathNodes2){
-            Point2D tempCoordinates = stations.get(n).localToScene(0,0);
-            path2.getElements().add(new LineTo(tempCoordinates.getX(),tempCoordinates.getY()));
-        }
+        HashMap<FactoryNode, Color> endPoints = new HashMap<>();
+        endPoints.put(to,Color.GREENYELLOW);
+        endPoints.put(to2, Color.PEACHPUFF);
+        setUpCircleAnimations(from, endPoints);
 
-        pathTransition = new PathTransition();
-        pathTransition.setDuration(Duration.millis(1000 * path1.getElements().size()));
-        pathTransition.setNode(circle1);
-        pathTransition.setPath(path1);
-        pathTransition.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
-        pathTransition.setCycleCount(100);
-        pathTransition.setAutoReverse(false);
-        aP.getChildren().add(circle1);
-        pathTransition2 = new PathTransition();
-        pathTransition2.setDuration(Duration.millis(1000 * path2.getElements().size()));
-        pathTransition2.setNode(circle2);
-        pathTransition2.setPath(path2);
-        pathTransition2.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
-        pathTransition2.setCycleCount(100);
-        pathTransition2.setAutoReverse(false);
-        aP.getChildren().add(circle2);
+
+
+    }
+
+    public void setUpCircleAnimations(FactoryNode from, HashMap<FactoryNode, Color> endPoints){
+        for(FactoryNode node : endPoints.keySet()){
+            Point2D screenCoordinates = stations.get(from).localToScene(0,0);
+            Circle circle = new Circle();
+            circle.setCenterY(screenCoordinates.getY());
+            circle.setCenterX(screenCoordinates.getX());
+            circle.setRadius(20);
+            circle.setFill(endPoints.get(node));
+
+            Path path = new Path();
+            MoveTo moveTo = new MoveTo(screenCoordinates.getX(),screenCoordinates.getY());
+            LinkedList<FactoryNode> pathNodes = FactoryNode.findPath(from, node, 0);
+            path.getElements().add(moveTo);
+            assert pathNodes != null;
+            for(FactoryNode n : pathNodes){
+                Point2D tempCoordinates = stations.get(n).localToScene(0,0);
+                path.getElements().add(new LineTo(tempCoordinates.getX(),tempCoordinates.getY()));
+            }
+            PathTransition pathTransition = new PathTransition();
+            pathTransition.setAutoReverse(false);
+            pathTransition.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
+            pathTransition.setCycleCount(1);
+            pathTransition.setDuration(Duration.millis(1000 * path.getElements().size()));
+            pathTransition.setNode(circle);
+            pathTransition.setPath(path);
+            circle.setOpacity(0);
+            pathTransition.setOnFinished(s -> circle.setOpacity(0));
+            pathTransitions.add(pathTransition);
+            anchorPane.getChildren().add(circle);
+
+        }
     }
 
 
