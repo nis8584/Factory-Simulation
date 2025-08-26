@@ -5,7 +5,7 @@ import org.example.BusMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-public class WorkStation {
+public class WorkStation extends FactoryNode{
 
     private EventBus eventBus;
 

@@ -33,12 +33,3 @@ decide which goal to focus (cost, efficiency, high Utilization,...) in order to 
 
 (Evaluation module: calculate current valuation, needs to collect data from WS: WS signals start and end of work?)
 
-
-todo:
-python in java? -> possible with jython but might not have all packages needed and not sure if can add?
-
-python <-> java communication -> imo best option is socket message transfer with specified message structure
-
-
-gui + basiselemente
-wie ist die factory aufgebaut? -> ringtopographie mit ausstechenden stationen
