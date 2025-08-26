@@ -2,6 +2,8 @@ package factory;
 
 import factory.controlledSystem.Factory;
 import factory.controlledSystem.FactoryNode;
+import factory.queueAndScheduler.Queue;
+import factory.queueAndScheduler.QueueParser;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -10,16 +12,18 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 
@@ -145,5 +149,12 @@ public class GraphicsController implements Initializable {
         }
     }
 
-
+    public void onLoadQueuePressed(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open textfile with queue data");
+        File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
+        QueueParser qp = new QueueParser();
+        Queue queue = qp.parseFileToQueue(selectedFile);
+        System.out.println(queue);
+    }
 }

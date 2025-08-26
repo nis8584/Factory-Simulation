@@ -8,14 +8,14 @@
 
 <AnchorPane fx:id="anchorPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1600.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="factory.GraphicsController">
    <children>
-      <VBox prefHeight="200.0" prefWidth="250.0">
+      <VBox prefHeight="829.0" prefWidth="250.0">
          <children>
             <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="LOGS:">
                <font>
                   <Font name="System Bold" size="18.0" />
                </font>
             </Label>
-            <ListView fx:id="logView" prefHeight="200.0" prefWidth="500.0" VBox.vgrow="SOMETIMES" />
+            <ListView fx:id="logView" prefHeight="776.0" prefWidth="250.0" VBox.vgrow="SOMETIMES" />
          </children>
       </VBox>
       <GridPane fx:id="gridPane" alignment="CENTER" gridLinesVisible="true" layoutX="575.0" layoutY="200.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
@@ -136,6 +136,7 @@
             </Polygon>
          </children>
       </GridPane>
-      <Button layoutX="289.0" layoutY="830.0" mnemonicParsing="false" onAction="#onButton" text="Button" />
+      <Button layoutX="21.0" layoutY="843.0" mnemonicParsing="false" onAction="#onButton" text="Start animation" />
+      <Button layoutX="157.0" layoutY="843.0" mnemonicParsing="false" onAction="#onLoadQueuePressed" text="load queue" />
    </children>
 </AnchorPane>
