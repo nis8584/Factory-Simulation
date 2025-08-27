@@ -15,4 +15,12 @@ public class Queue {
                 "tasks=" + tasks +
                 '}';
     }
+
+    public LinkedList<Task> getTasks() {
+        return tasks;
+    }
+
+    public void addToQueue(Task task){
+        tasks.add(task);
+    }
 }

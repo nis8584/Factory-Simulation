@@ -7,8 +7,9 @@ public class FactoryNode {
 
     private String position;
 
+    private final char key;
 
-    public FactoryNode(){}
+    public FactoryNode(char k){key = k;}
 
     public Map<FactoryNode, Integer> getNeighbors() {
         return neighbors;
@@ -26,12 +27,19 @@ public class FactoryNode {
         this.position = position;
     }
 
+    public char getKey() {
+        return key;
+    }
+
     @Override
     public String toString() {
         return "FactoryNode{" +
                 "position='" + position + '\'' +
+                ", key='" + key + '\'' +
+                //", neighbors='" + neighbors +'\'' +
                 '}';
     }
+
  //todo consider putting pathfinding in new class maybe also animation class?
     /**
      * Method to recursively find the cheapest path from one FactoryNode to another.
@@ -110,4 +118,16 @@ public class FactoryNode {
         return cost;
     }
 
+    public static boolean alreadyPresentInList(char key, LinkedList<FactoryNode> list){
+        for(FactoryNode node : list){
+            if(node.getKey() == key) return true;
+        }
+        return false;
+    }
+    public static boolean alreadyPresentInList(char key1, char key2, LinkedList<FactoryNode> list){
+        for(FactoryNode node : list){
+            if(node.getKey() == key1 || node.getKey() == key2) return true;
+        }
+        return false;
+    }
 }

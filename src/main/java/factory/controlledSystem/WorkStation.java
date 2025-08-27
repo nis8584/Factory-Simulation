@@ -10,9 +10,10 @@ public class WorkStation extends FactoryNode{
     private EventBus eventBus;
 
     @Inject
-    public WorkStation(EventBus eventBus){
-    this.eventBus = eventBus;
-    eventBus.register(this);
+    public WorkStation(char key, EventBus eventBus){
+        super(key);
+        this.eventBus = eventBus;
+        eventBus.register(this);
     }
 
     @Subscribe

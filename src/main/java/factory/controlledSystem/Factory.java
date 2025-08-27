@@ -1,20 +1,24 @@
 package factory.controlledSystem;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import factory.queueAndScheduler.Scheduler;
+
+import java.util.*;
 
 public class Factory {
-    FactoryNode fn1 = new FactoryNode();
-    FactoryNode fn2 = new FactoryNode();
-    FactoryNode fn3 = new FactoryNode();
-    FactoryNode fn4 = new FactoryNode();
-    FactoryNode fn5 = new FactoryNode();
-    FactoryNode fn6 = new FactoryNode();
-    FactoryNode fn7 = new FactoryNode();
-    FactoryNode fn8 = new FactoryNode();
-    FactoryNode fn9 = new FactoryNode();
+    //remove later:
+    FactoryNode fn1 = new FactoryNode('a');
+    FactoryNode fn2 = new FactoryNode('a');
+    FactoryNode fn3 = new FactoryNode('a');
+    FactoryNode fn4 = new FactoryNode('a');
+    FactoryNode fn5 = new FactoryNode('a');
+    FactoryNode fn6 = new FactoryNode('a');
+    FactoryNode fn7 = new FactoryNode('a');
+    FactoryNode fn8 = new FactoryNode('a');
+    FactoryNode fn9 = new FactoryNode('a');
+    // // // // // // // // //
+
+    private Scheduler scheduler;
+
 
     public Factory() {
         //todo make this into something that is loaded from a file at runtime -> parser?
@@ -66,7 +70,16 @@ public class Factory {
         fn7.setPosition("4,0");
         fn8.setPosition("2,0");
         fn9.setPosition("2,2");
-        System.out.println(FactoryNode.findPath(fn2,fn9,0).toString());
+        System.out.println(Objects.requireNonNull(FactoryNode.findPath(fn2, fn9, 0)).toString());
+    }
+
+    public void setScheduler(Scheduler scheduler) {
+        this.scheduler = scheduler;
+        scheduler.run();
+    }
+
+    public Scheduler getScheduler() {
+        return scheduler;
     }
 
     public List<FactoryNode> getFactoryNodes(){

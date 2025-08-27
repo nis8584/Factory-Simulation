@@ -3,7 +3,7 @@ package factory;
 import factory.controlledSystem.Factory;
 import factory.controlledSystem.FactoryNode;
 import factory.queueAndScheduler.Queue;
-import factory.queueAndScheduler.QueueParser;
+import factory.queueAndScheduler.FileParser;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -20,7 +20,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
@@ -39,7 +38,7 @@ public class GraphicsController implements Initializable {
 
     private ObservableList<String> logList = FXCollections.observableArrayList();
 
-    private Factory factory = new Factory();
+    private Factory factory;
 
     List<PathTransition> pathTransitions = new LinkedList<>();
 
@@ -82,6 +81,7 @@ public class GraphicsController implements Initializable {
         // same as constructor:
         logView.setItems(logList);
         List<FactoryNode> list = factory.getFactoryNodes();
+
         for(FactoryNode node : list){
             Rectangle rectangle = new Rectangle(25,25, Color.RED);
             int col = Integer.parseInt(String.valueOf(node.getPosition().charAt(0)));
@@ -98,18 +98,19 @@ public class GraphicsController implements Initializable {
         //make sure that the positions are written correctly!
         FactoryNode from = stations.keySet().stream().filter(s -> s.getPosition().equals("0,2")).findFirst().get();
 
-        FactoryNode to = stations.keySet().stream().filter(s -> s.getPosition().equals("4,2")).findFirst().get();
+        FactoryNode to  = stations.keySet().stream().filter(s -> s.getPosition().equals("4,2")).findFirst().get();
         FactoryNode to2 = stations.keySet().stream().filter(s -> s.getPosition().equals("0,4")).findFirst().get();
         FactoryNode to3 = stations.keySet().stream().filter(s -> s.getPosition().equals("2,2")).findFirst().get();
         FactoryNode to4 = stations.keySet().stream().filter(s -> s.getPosition().equals("2,4")).findFirst().get();
         FactoryNode to5 = stations.keySet().stream().filter(s -> s.getPosition().equals("0,0")).findFirst().get();
 
         HashMap<FactoryNode, Color> endPoints = new HashMap<>();
-        endPoints.put(to,Color.GREENYELLOW);
+        endPoints.put(to , Color.GREENYELLOW);
         endPoints.put(to2, Color.PEACHPUFF);
         endPoints.put(to3, Color.RED );
         endPoints.put(to4, Color.ROYALBLUE );
         endPoints.put(to5, Color.BLACK );
+
         setUpCircleAnimations(from, endPoints);
 
 
@@ -153,8 +154,7 @@ public class GraphicsController implements Initializable {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open textfile with queue data");
         File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
-        QueueParser qp = new QueueParser();
-        Queue queue = qp.parseFileToQueue(selectedFile);
+        Queue queue = FileParser.parseFileToQueue(selectedFile);
         System.out.println(queue);
     }
 }
