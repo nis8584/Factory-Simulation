@@ -1,5 +1,10 @@
 package factory;
 
+import com.google.inject.Inject;
+import factory.communication.LogMessage;
+import factory.communication.PostingService;
+import factory.communication.SetLayoutMessage;
+import factory.communication.SetQueueMessage;
 import factory.controlledSystem.Factory;
 import factory.controlledSystem.FactoryNode;
 import factory.queueAndScheduler.Queue;
@@ -21,6 +26,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.io.File;
 import java.net.URL;
@@ -34,11 +41,17 @@ public class GraphicsController implements Initializable {
     @FXML
     AnchorPane anchorPane;
 
+    @Inject
+    protected PostingService postingService;
+
+    @Inject
+    protected EventBus eventBus;
+
     private Map<FactoryNode, Rectangle> stations = new HashMap<>();
 
     private ObservableList<String> logList = FXCollections.observableArrayList();
 
-    private Factory factory;
+    private Factory factory = new Factory(); // durch dynamisches laden erestzen
 
     List<PathTransition> pathTransitions = new LinkedList<>();
 
@@ -49,16 +62,16 @@ public class GraphicsController implements Initializable {
         }));
     }
 
-    /**
-     * method to add text to the log window
-     * @param s string to be added
-     */
-    public void logInGUI(String s){
-        logList.add(s);
+    @SuppressWarnings("no usages")
+    @Subscribe
+    public void onLogMessage(LogMessage logMessage){
+        logList.add(logMessage.getMsg());
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle){
+        eventBus.register(this);
+        // setup listview cells to wrap text
         // Source: https://stackoverflow.com/questions/53493111/javafx-wrapping-text-in-listview
         logView.setCellFactory(param -> new ListCell<>(){
             @Override
@@ -80,20 +93,7 @@ public class GraphicsController implements Initializable {
 
         // same as constructor:
         logView.setItems(logList);
-        List<FactoryNode> list = factory.getFactoryNodes();
-
-        for(FactoryNode node : list){
-            Rectangle rectangle = new Rectangle(25,25, Color.RED);
-            int col = Integer.parseInt(String.valueOf(node.getPosition().charAt(0)));
-            int row = Integer.parseInt(String.valueOf(node.getPosition().charAt(2)));
-            stations.put(node, rectangle);
-            gridPane.add(rectangle,col,row);
-        }
-
-        gridPane.layout();
-        anchorPane.layout();
-
-
+/*
         //todo move this to new class AnimationCreation or smth
         //make sure that the positions are written correctly!
         FactoryNode from = stations.keySet().stream().filter(s -> s.getPosition().equals("0,2")).findFirst().get();
@@ -113,7 +113,7 @@ public class GraphicsController implements Initializable {
 
         setUpCircleAnimations(from, endPoints);
 
-
+ */
 
     }
     //todo move this to new class AnimationCreator or smth
@@ -155,6 +155,35 @@ public class GraphicsController implements Initializable {
         fileChooser.setTitle("Open textfile with queue data");
         File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
         Queue queue = FileParser.parseFileToQueue(selectedFile);
-        System.out.println(queue);
+        postingService.post(new SetQueueMessage(queue));
+
+    }
+
+    public void onLoadLayoutPressed(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open textfile with layout data");
+        File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
+        LinkedList<FactoryNode> layout = FileParser.parseFileToFactoryNodeSetup(selectedFile);
+        postingService.post(new SetLayoutMessage(layout));
+    }
+    @Subscribe
+    public void onSetLayout(SetLayoutMessage message){
+        if(message.getFactoryNodes() == null) return;
+        factory = new Factory();
+        factory.setWorkStations(message.getFactoryNodes());
+        for(Node node :gridPane.getChildren()){
+            if(node instanceof Rectangle){
+                Platform.runLater(()-> gridPane.getChildren().remove(node));
+            }
+        }
+        for(FactoryNode node : factory.getWorkStations()){
+            Rectangle rectangle = new Rectangle(25,25, Color.RED);
+            int col = Integer.parseInt(String.valueOf(node.getPosition().charAt(0)));
+            int row = Integer.parseInt(String.valueOf(node.getPosition().charAt(2)));
+            stations.put(node, rectangle);
+            Platform.runLater(()-> gridPane.add(rectangle,col,row));
+        }
+        gridPane.layout();
+        anchorPane.layout();
     }
 }

@@ -1,10 +1,9 @@
 package factory.controlledSystem;
 
-import factory.queueAndScheduler.Scheduler;
-
 import java.util.*;
 
 public class Factory {
+    /*
     //remove later:
     FactoryNode fn1 = new FactoryNode('a');
     FactoryNode fn2 = new FactoryNode('a');
@@ -17,10 +16,15 @@ public class Factory {
     FactoryNode fn9 = new FactoryNode('a');
     // // // // // // // // //
 
-    private Scheduler scheduler;
+     */
+    private DispenserStation dispenserStation;
 
+    private DropOffStation dropOffStation;
+
+    private LinkedList<FactoryNode> workStations;
 
     public Factory() {
+        /*
         //todo make this into something that is loaded from a file at runtime -> parser?
         //individual connections and costs
         Map<FactoryNode, Integer> m1 = new HashMap<>();
@@ -71,29 +75,16 @@ public class Factory {
         fn8.setPosition("2,0");
         fn9.setPosition("2,2");
         System.out.println(Objects.requireNonNull(FactoryNode.findPath(fn2, fn9, 0)).toString());
+
+         */
     }
 
-    public void setScheduler(Scheduler scheduler) {
-        this.scheduler = scheduler;
-        scheduler.run();
+    public void setWorkStations(LinkedList<FactoryNode> workStations) {
+        this.workStations = workStations;
     }
 
-    public Scheduler getScheduler() {
-        return scheduler;
-    }
-
-    public List<FactoryNode> getFactoryNodes(){
-        List<FactoryNode> list = new LinkedList<>();
-        list.add(fn1);
-        list.add(fn2);
-        list.add(fn3);
-        list.add(fn4);
-        list.add(fn5);
-        list.add(fn6);
-        list.add(fn7);
-        list.add(fn8);
-        list.add(fn9);
-        return list;
+    public List<FactoryNode> getWorkStations(){
+        return workStations;
     }
 
 }

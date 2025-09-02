@@ -1,15 +1,28 @@
 package factory.controlledSystem;
 
+import com.google.inject.Inject;
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.*;
 
 public class FactoryNode {
-    private Map<FactoryNode, Integer> neighbors = new HashMap<>();
+    protected Map<FactoryNode, Integer> neighbors = new HashMap<>();
 
-    private String position;
+    protected String position;
 
-    private final char key;
+    protected final char key;
 
-    public FactoryNode(char k){key = k;}
+    @Inject
+    protected EventBus eventBus;
+
+    public FactoryNode(char k){
+        key = k;
+    }
+    @Inject
+    public void setEventBus(EventBus eventBus){
+        this.eventBus = eventBus;
+        eventBus.register(this);
+    }
 
     public Map<FactoryNode, Integer> getNeighbors() {
         return neighbors;
@@ -129,5 +142,11 @@ public class FactoryNode {
             if(node.getKey() == key1 || node.getKey() == key2) return true;
         }
         return false;
+    }
+    public static FactoryNode getNodeByChar(char c, LinkedList<FactoryNode> list){
+        for(FactoryNode node : list){
+            if(node.getKey() == c) return node;
+        }
+        return null;
     }
 }
