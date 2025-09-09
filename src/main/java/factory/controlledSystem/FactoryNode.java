@@ -1,14 +1,22 @@
 package factory.controlledSystem;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.*;
 
 public class FactoryNode {
-    private Map<FactoryNode, Integer> neighbors = new HashMap<>();
+    protected Map<FactoryNode, Integer> neighbors = new HashMap<>();
 
-    private String position;
+    protected String position;
 
+    protected final char key;
 
-    public FactoryNode(){}
+    protected EventBus eventBus;
+
+    public FactoryNode(char k){
+        key = k;
+    }
+
 
     public Map<FactoryNode, Integer> getNeighbors() {
         return neighbors;
@@ -26,12 +34,19 @@ public class FactoryNode {
         this.position = position;
     }
 
+    public char getKey() {
+        return key;
+    }
+
     @Override
     public String toString() {
         return "FactoryNode{" +
                 "position='" + position + '\'' +
+                ", key='" + key + '\'' +
+                //", neighbors='" + neighbors +'\'' +
                 '}';
     }
+
  //todo consider putting pathfinding in new class maybe also animation class?
     /**
      * Method to recursively find the cheapest path from one FactoryNode to another.
@@ -44,7 +59,7 @@ public class FactoryNode {
     public static LinkedList<FactoryNode> findPath(FactoryNode from, FactoryNode to, int previousIterations){
         LinkedList<FactoryNode> list = new LinkedList<>();
         // running too long?
-        if(previousIterations > 100) return null;
+        if(previousIterations > 50) return null;
         //already there?
         if(from.equals(to)){
             list.add(from);
@@ -57,7 +72,9 @@ public class FactoryNode {
             if(from.getNeighbors().size() == 1){
                 FactoryNode nextNode =  from.neighbors.keySet().iterator().next();
                 //add to list and look from there
-                list.addAll(findPath(nextNode,to,previousIterations));
+                LinkedList<FactoryNode> path = findPath(nextNode,to,previousIterations+1);
+                if(path == null) return null;
+                list.addAll(path);
             } else if(from.getNeighbors().size() > 1){
                 //multiple next possible
                 int currentBestCost = -1;
@@ -110,4 +127,17 @@ public class FactoryNode {
         return cost;
     }
 
+    public static boolean alreadyPresentInList(char key, LinkedList<FactoryNode> list){
+        for(FactoryNode node : list){
+            if(node.getKey() == key) return true;
+        }
+        return false;
+    }
+
+    public static FactoryNode getNodeByChar(char c, LinkedList<FactoryNode> list){
+        for(FactoryNode node : list){
+            if(node.getKey() == c) return node;
+        }
+        return null;
+    }
 }

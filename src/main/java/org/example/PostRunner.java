@@ -1,6 +1,7 @@
 package org.example;
 
-import com.google.common.eventbus.EventBus;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.Random;
 

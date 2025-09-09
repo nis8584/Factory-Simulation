@@ -1,6 +1,8 @@
 package org.example;
 
-import com.google.common.eventbus.EventBus;
+
+import org.greenrobot.eventbus.EventBus;
+
 // Test for functionality of Eventbus with multiple Runners
 public class Main {
     public static void main(String[] args) {

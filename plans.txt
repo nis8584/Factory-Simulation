@@ -33,3 +33,25 @@ decide which goal to focus (cost, efficiency, high Utilization,...) in order to 
 
 (Evaluation module: calculate current valuation, needs to collect data from WS: WS signals start and end of work?)
 
+since last meeting:
+redid the pathcalc to only run when new or changes,
+added way to notify when changes occur -> this caused me to debug for like 2 hours
+
+did some work on gui for workstation controllers ( now with 100% more sliders)
+
+abstracted up a layer for graphic interface ( at least tried to lol)
+
+tried to make the center gui for different node type more distinct
+
+added cost counter to tasks
+
+task with a next step that cant be done rn get added to the back of the queue. if all tasks cant be done currently the system waits.
+
+added markings to indicate connections between nodes
+
+adjusted synchronization and thread setting to have more desired behavior for running multiple tasks through the system
+
+
+
+Qs:
+do we need multi digit connection costs?
