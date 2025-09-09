@@ -1,4 +1,4 @@
-package factory.communication;
+package factory.communication.message;
 
 public class LogMessage implements Message {
     private final String msg;

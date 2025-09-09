@@ -1,39 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane fx:id="anchorPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1600.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="factory.GraphicsController">
+<AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1600.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="factory.GraphicsController">
    <children>
-      <VBox prefHeight="829.0" prefWidth="250.0">
+      <HBox prefHeight="900.0" prefWidth="1600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="LOGS:">
-               <font>
-                  <Font name="System Bold" size="18.0" />
-               </font>
-            </Label>
-            <ListView fx:id="logView" prefHeight="776.0" prefWidth="250.0" VBox.vgrow="SOMETIMES" />
+            <VBox prefHeight="829.0" prefWidth="364.0">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="LOGS:">
+                     <font>
+                        <Font name="System Bold" size="18.0" />
+                     </font>
+                  </Label>
+                  <ListView fx:id="logView" prefHeight="804.0" prefWidth="233.0" VBox.vgrow="SOMETIMES" />
+                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#onButton" text="Start animation">
+                           <HBox.margin>
+                              <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+                           </HBox.margin>
+                        </Button>
+                        <Button mnemonicParsing="false" onAction="#onLoadQueuePressed" text="load queue">
+                           <HBox.margin>
+                              <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+                           </HBox.margin>
+                        </Button>
+                        <Button mnemonicParsing="false" onAction="#onLoadLayoutPressed" text="load Layout">
+                           <HBox.margin>
+                              <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+                           </HBox.margin>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <VBox fx:id="controlPanel" alignment="CENTER" prefHeight="617.0" prefWidth="305.0">
+               <HBox.margin>
+                  <Insets bottom="16.0" left="8.0" right="8.0" top="16.0" />
+               </HBox.margin>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </VBox>
+            <GridPane fx:id="gridPane" alignment="CENTER" gridLinesVisible="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
+              <columnConstraints>
+                  <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
+                  <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
+                  <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
+                  <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
+                  <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
+              </columnConstraints>
+              <rowConstraints>
+                  <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
+                  <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
+                  <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
+                  <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
+                  <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
+              </rowConstraints>
+               <HBox.margin>
+                  <Insets left="32.0" />
+               </HBox.margin>
+            </GridPane>
          </children>
-      </VBox>
-      <GridPane fx:id="gridPane" alignment="CENTER" gridLinesVisible="true" layoutX="575.0" layoutY="200.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
-        <columnConstraints>
-            <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
-            <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
-            <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
-            <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
-            <RowConstraints minHeight="90.0" prefHeight="0.0" valignment="CENTER" vgrow="NEVER" />
-        </rowConstraints>
-      </GridPane>
-      <Button layoutX="21.0" layoutY="843.0" mnemonicParsing="false" onAction="#onButton" text="Start animation" />
-      <Button layoutX="157.0" layoutY="843.0" mnemonicParsing="false" onAction="#onLoadQueuePressed" text="load queue" />
-      <Button layoutX="272.0" layoutY="843.0" mnemonicParsing="false" onAction="#onLoadLayoutPressed" text="load Layout" />
+      </HBox>
    </children>
 </AnchorPane>

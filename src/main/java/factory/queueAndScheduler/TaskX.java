@@ -1,13 +1,12 @@
 package factory.queueAndScheduler;
 
-import factory.controlledSystem.WorkStation;
-
-import java.util.Collection;
+import java.util.LinkedList;
 
 public class TaskX extends Task{
 
-    public TaskX(Collection<WorkStation> workStations) {
-        super(workStations);
+
+    protected TaskX(LinkedList<String> requiredTasks) {
+        super(requiredTasks);
     }
 
     @Override

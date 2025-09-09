@@ -2,38 +2,38 @@ package factory;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import factory.controlledSystem.Factory;
 import factory.dependencyInjection.FXMLLoaderProvider;
 import factory.dependencyInjection.FactoryModule;
-import factory.queueAndScheduler.Scheduler;
+import factory.queueAndScheduler.SchedulerInterface;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.example.BusMessage;
-import org.greenrobot.eventbus.EventBus;
 
 public class FactoryApplication extends Application {
 
-    FXMLLoader loader;
 
-    Factory factory;
-    Scheduler scheduler;
+    SchedulerInterface scheduler;
+
+    GUIControllerConnection controllerConnection;
 
     @Override
     public void start(Stage stage) throws Exception {
 
         Injector injector = Guice.createInjector(new FactoryModule());
         FXMLLoaderProvider loaderProvider = injector.getInstance(FXMLLoaderProvider.class);
-        factory = injector.getInstance(Factory.class);
-        scheduler = injector.getInstance(Scheduler.class);
-        loader = loaderProvider.get();
+        scheduler = injector.getInstance(SchedulerInterface.class);
+        controllerConnection = (GUIControllerConnection) injector.getInstance(GUIControllerConnectionInterface.class);
+        FXMLLoader loader = loaderProvider.get();
         loader.setLocation(getClass().getResource("/fxml/MainView.fxml"));
         Scene scene = new Scene(loader.load());
+        GraphicsController graphicsController = loader.getController();
+        Platform.runLater(() -> controllerConnection.setController(graphicsController));
         stage.setTitle("Factory Simulation");
         stage.setScene(scene);
         stage.show();
-        injector.getInstance(EventBus.class).post(new BusMessage(1));
+
 /*
         // example for injection and Bus comms
         WorkStation ws = injector.getInstance(WorkStation.class);
@@ -48,6 +48,10 @@ public class FactoryApplication extends Application {
         }
 
  */
+    }
+
+    public void stop(){
+        System.exit(0);
     }
 
     public static void main(String[] args){

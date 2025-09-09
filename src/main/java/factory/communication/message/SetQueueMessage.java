@@ -1,4 +1,4 @@
-package factory.communication;
+package factory.communication.message;
 
 import factory.queueAndScheduler.Queue;
 

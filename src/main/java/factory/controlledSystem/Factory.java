@@ -1,90 +1,90 @@
 package factory.controlledSystem;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import factory.communication.message.SetLayoutMessage;
+import factory.communication.message.WorkStationCostChangeMessage;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.*;
 
-public class Factory {
-    /*
-    //remove later:
-    FactoryNode fn1 = new FactoryNode('a');
-    FactoryNode fn2 = new FactoryNode('a');
-    FactoryNode fn3 = new FactoryNode('a');
-    FactoryNode fn4 = new FactoryNode('a');
-    FactoryNode fn5 = new FactoryNode('a');
-    FactoryNode fn6 = new FactoryNode('a');
-    FactoryNode fn7 = new FactoryNode('a');
-    FactoryNode fn8 = new FactoryNode('a');
-    FactoryNode fn9 = new FactoryNode('a');
-    // // // // // // // // //
+@Singleton
+public class Factory implements FactoryInterface{
 
-     */
     private DispenserStation dispenserStation;
 
     private DropOffStation dropOffStation;
 
-    private LinkedList<FactoryNode> workStations;
+    private LinkedList<FactoryNode> factoryNodes;
 
-    public Factory() {
-        /*
-        //todo make this into something that is loaded from a file at runtime -> parser?
-        //individual connections and costs
-        Map<FactoryNode, Integer> m1 = new HashMap<>();
-        m1.put(fn2, 1);
-        fn1.setNeighbors(m1);
+    private Map<Character,Map<Character,LinkedList<FactoryNode>>> pathTable;
 
-        Map<FactoryNode, Integer> m2 = new HashMap<>();
-        m2.put(fn3, 1);
-        fn2.setNeighbors(m2);
-
-        Map<FactoryNode, Integer> m3 = new HashMap<>();
-        m3.put(fn4, 1);
-        fn3.setNeighbors(m3);
-
-        Map<FactoryNode, Integer> m4 = new HashMap<>();
-        m4.put(fn5, 1);
-        m4.put(fn9, 1);
-        fn4.setNeighbors(m4);
-
-        Map<FactoryNode, Integer> m5 = new HashMap<>();
-        m5.put(fn6, 1);
-        fn5.setNeighbors(m5);
-
-        Map<FactoryNode, Integer> m6 = new HashMap<>();
-        m6.put(fn7, 1);
-        fn6.setNeighbors(m6);
-
-        Map<FactoryNode, Integer> m7 = new HashMap<>();
-        m7.put(fn8, 1);
-        fn7.setNeighbors(m7);
-
-        Map<FactoryNode, Integer> m8 = new HashMap<>();
-        m8.put(fn1, 1);
-        fn8.setNeighbors(m8);
-
-        Map<FactoryNode, Integer> m9 = new HashMap<>();
-        m9.put(fn8, 1);
-        fn9.setNeighbors(m9);
-
-        //position for gui grid
-        fn1.setPosition("0,0");
-        fn2.setPosition("0,2");
-        fn3.setPosition("0,4");
-        fn4.setPosition("2,4");
-        fn5.setPosition("4,4");
-        fn6.setPosition("4,2");
-        fn7.setPosition("4,0");
-        fn8.setPosition("2,0");
-        fn9.setPosition("2,2");
-        System.out.println(Objects.requireNonNull(FactoryNode.findPath(fn2, fn9, 0)).toString());
-
-         */
+    @Inject
+    public Factory(EventBus eventBus) {
+        eventBus.register(this);
     }
 
-    public void setWorkStations(LinkedList<FactoryNode> workStations) {
-        this.workStations = workStations;
+    @Subscribe
+    public void onWorkStationCostChangeMessage (WorkStationCostChangeMessage message){
+        calculatePaths();
     }
 
-    public List<FactoryNode> getWorkStations(){
-        return workStations;
+    @Subscribe
+    public void onSetLayoutMessage(SetLayoutMessage message){
+        setFactoryNodes(message.getFactoryNodes());
+
     }
 
+    public void setFactoryNodes(LinkedList<FactoryNode> factoryNodes) {
+        if(factoryNodes == null) return;
+        this.factoryNodes = factoryNodes;
+        for(FactoryNode node : factoryNodes){
+            if(node instanceof DispenserStation) dispenserStation = (DispenserStation) node;
+            if(node instanceof DropOffStation) dropOffStation = (DropOffStation) node;
+        }
+        calculatePaths();
+    }
+    private void calculatePaths(){
+        pathTable = new TreeMap<>();
+        for(FactoryNode fromNode: factoryNodes){
+            char k = fromNode.getKey();
+            Map<Character, LinkedList<FactoryNode>> pathsFromk = new TreeMap<>();
+            for(FactoryNode toNode: factoryNodes){
+                char c = toNode.getKey();
+                pathsFromk.put(c,FactoryNode.findPath(fromNode,toNode,0));
+            }
+            pathTable.put(k,pathsFromk);
+        }
+    }
+
+    public Map<Character, Map<Character, LinkedList<FactoryNode>>> getPathTable() {
+        return pathTable;
+    }
+
+    public List<FactoryNode> getFactoryNodes(){
+        return factoryNodes;
+    }
+
+    public DispenserStation getDispenserStation() {
+        return dispenserStation;
+    }
+
+    public DropOffStation getDropOffStation() {
+        return dropOffStation;
+    }
+
+    public FactoryNode getNodeByKey(char k){
+        return FactoryNode.getNodeByChar(k, factoryNodes);
+    }
+
+    public List<WorkStation> getAvalibleWorkStations(String s){
+        List<WorkStation> list = new ArrayList<>();
+        for( FactoryNode node : factoryNodes){
+            if(node instanceof WorkStation && ((WorkStation) node).getTypeOfWork().equals(s)){
+                list.add((WorkStation) node);
+            }
+        }
+        return list;
+    }
 }

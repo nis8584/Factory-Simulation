@@ -1,6 +1,5 @@
 package factory.controlledSystem;
 
-import com.google.inject.Inject;
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.*;
@@ -12,17 +11,12 @@ public class FactoryNode {
 
     protected final char key;
 
-    @Inject
     protected EventBus eventBus;
 
     public FactoryNode(char k){
         key = k;
     }
-    @Inject
-    public void setEventBus(EventBus eventBus){
-        this.eventBus = eventBus;
-        eventBus.register(this);
-    }
+
 
     public Map<FactoryNode, Integer> getNeighbors() {
         return neighbors;
@@ -65,7 +59,7 @@ public class FactoryNode {
     public static LinkedList<FactoryNode> findPath(FactoryNode from, FactoryNode to, int previousIterations){
         LinkedList<FactoryNode> list = new LinkedList<>();
         // running too long?
-        if(previousIterations > 100) return null;
+        if(previousIterations > 50) return null;
         //already there?
         if(from.equals(to)){
             list.add(from);
@@ -78,7 +72,9 @@ public class FactoryNode {
             if(from.getNeighbors().size() == 1){
                 FactoryNode nextNode =  from.neighbors.keySet().iterator().next();
                 //add to list and look from there
-                list.addAll(findPath(nextNode,to,previousIterations));
+                LinkedList<FactoryNode> path = findPath(nextNode,to,previousIterations+1);
+                if(path == null) return null;
+                list.addAll(path);
             } else if(from.getNeighbors().size() > 1){
                 //multiple next possible
                 int currentBestCost = -1;
@@ -137,12 +133,7 @@ public class FactoryNode {
         }
         return false;
     }
-    public static boolean alreadyPresentInList(char key1, char key2, LinkedList<FactoryNode> list){
-        for(FactoryNode node : list){
-            if(node.getKey() == key1 || node.getKey() == key2) return true;
-        }
-        return false;
-    }
+
     public static FactoryNode getNodeByChar(char c, LinkedList<FactoryNode> list){
         for(FactoryNode node : list){
             if(node.getKey() == c) return node;
