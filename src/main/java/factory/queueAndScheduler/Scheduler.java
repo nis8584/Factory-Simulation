@@ -12,6 +12,7 @@ import factory.controlledSystem.WorkStation;
 import javafx.scene.paint.Color;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.*;
 
@@ -30,6 +31,10 @@ public class Scheduler implements SchedulerInterface {
     private final EventBus eventBus;
 
     private final Factory factory;
+    private final int numberOfRunningChains = 5;
+    private int runningChains = 0;
+
+    private final Object chainCounterMutex = new Object();
 
     @Inject
     public Scheduler(EventBus eventBus, Injector injector){
@@ -67,6 +72,12 @@ public class Scheduler implements SchedulerInterface {
         taskList.remove(nextTask);
         return nextTask;
     }
+    private boolean canNextTaskBeStarted(){
+        LinkedList<Task> tasks = queue.getTasks();
+        if(tasks.isEmpty()) return false;
+        List<WorkStation> availableStations = factory.getAvalibleWorkStations(tasks.getFirst().getRequiredWorkStations().getFirst());
+        return !availableStations.isEmpty();
+    }
 
     public void addTask(Task task){
         queue.addToQueue(task);
@@ -94,7 +105,7 @@ public class Scheduler implements SchedulerInterface {
         layoutPresent = true;
     }
 
-    @Subscribe
+    @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onStartSimulation(StartWorkSimulation message){
         if(!(queuePresent && layoutPresent)) {
             PostingService.log("first set queue and layout");
@@ -104,30 +115,60 @@ public class Scheduler implements SchedulerInterface {
     }
 
     public void startTask(){
-            Task next = getNext();
-            if(next == null) return;
-            WorkStation cheapestStation = findNextStation(next, factory.getDispenserStation().getKey());
-            if(cheapestStation == null){
-                addTask(next);
-                Thread t = new Thread(()->{
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                PostingService.log("No Workstation suits next step in Task");
-                eventBus.post(new StartWorkSimulation());
+        Task next = getNext();
+        if(next == null) return;
+        WorkStation cheapestStation = findNextStation(next, factory.getDispenserStation().getKey());
+        if(cheapestStation == null && !next.getRequiredWorkStations().isEmpty()) {
+            addTask(next);
+            int n;
+            synchronized (chainCounterMutex) {
+                n = runningChains;
+            }
+            if (n <= 1) {
+                Thread t = new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    PostingService.log("No Workstation suits next step in Task");
+                    eventBus.post(new StartWorkSimulation());
                 });
                 t.start();
-                return;
+            } else {
+                synchronized (chainCounterMutex){
+                    runningChains--;
+                }
             }
-            FactoryNode from = factory.getDispenserStation();
-            LinkedList<FactoryNode> path = factory.getPathTable().get(from.getKey()).get(cheapestStation.getKey());
+            return;
+        }
+        FactoryNode from = factory.getDispenserStation();
+        LinkedList<FactoryNode> path;
+        if(next.getRequiredWorkStations().isEmpty()){
+            path = factory.getPathTable().get(from.getKey()).get(factory.getDropOffStation().getKey());
+        } else {
+            path = factory.getPathTable().get(from.getKey()).get(cheapestStation.getKey());
+        }
 
-            next.setStartTime();
+        next.setStartTime();
             eventBus.post(new AnimateMoveMessage(path, Color.GREEN));
             eventBus.post(new DoWorkMessage(next, FactoryNode.costPerPath(path), cheapestStation.getKey()));
-
+            synchronized (chainCounterMutex){
+                runningChains++;
+            }
+            int n;
+            synchronized (chainCounterMutex){
+                n = runningChains;
+            }
+            if(canNextTaskBeStarted() && n<numberOfRunningChains){
+                try {
+                    Thread.sleep(500);
+                    eventBus.post(new StartWorkSimulation());
+                } catch (InterruptedException e) {
+                    //todo better logging
+                    throw new RuntimeException(e);
+                }
+            }
     }
 
     @Subscribe

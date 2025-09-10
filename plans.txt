@@ -51,7 +51,7 @@ added markings to indicate connections between nodes
 
 adjusted synchronization and thread setting to have more desired behavior for running multiple tasks through the system
 
-
+tested json and xml as way of saving factory: seems more complicated to get to work compared to already existing parser
 
 Qs:
 do we need multi digit connection costs?

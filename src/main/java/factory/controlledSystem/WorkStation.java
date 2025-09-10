@@ -64,4 +64,15 @@ public class WorkStation extends FactoryNode{
         }
     }
 
+    @Override
+    public String toString() {
+        return "WorkStation{" +
+                "typeOfWork='" + typeOfWork + '\'' +
+                ", processingCost=" + processingCost +
+                ", neighbors=" + neighbors +
+                ", position='" + position + '\'' +
+                ", key=" + key +
+                ", eventBus=" + eventBus +
+                '}';
+    }
 }
