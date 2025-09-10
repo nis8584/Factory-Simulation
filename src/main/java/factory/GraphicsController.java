@@ -1,5 +1,7 @@
 package factory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import factory.communication.GlobalConstants;
 import factory.communication.message.*;
@@ -28,6 +30,7 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -106,6 +109,15 @@ public class GraphicsController implements Initializable {
         File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
         if(selectedFile == null) return;
         LinkedList<FactoryNode> layout = FileParser.parseFileToFactoryNodeSetup(selectedFile);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            LinkedList<FactoryNode> list;
+            list = mapper.readValue(new File("jsonoutput.json"), new TypeReference<LinkedList<FactoryNode>>() {});
+            //mapper.writeValue(new File("jsonoutput.json"), layout);
+            System.out.println(list.get(1));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         postingService.post(new SetLayoutMessage(layout));
     }
 

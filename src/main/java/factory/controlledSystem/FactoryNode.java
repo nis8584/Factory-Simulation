@@ -1,10 +1,16 @@
 package factory.controlledSystem;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import factory.FactoryNodeDeserializer;
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class FactoryNode {
+public class FactoryNode implements Serializable {
+
+    @JsonDeserialize(keyUsing = FactoryNodeDeserializer.class)
     protected Map<FactoryNode, Integer> neighbors = new HashMap<>();
 
     protected String position;
@@ -13,7 +19,7 @@ public class FactoryNode {
 
     protected EventBus eventBus;
 
-    public FactoryNode(char k){
+    public FactoryNode(@JsonProperty("key") char k){
         key = k;
     }
 
