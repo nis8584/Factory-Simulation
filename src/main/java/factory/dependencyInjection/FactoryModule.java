@@ -11,6 +11,9 @@ import factory.queueAndScheduler.SchedulerInterface;
 import javafx.fxml.FXMLLoader;
 import org.greenrobot.eventbus.EventBus;
 
+/**
+ * Module that provides dependency injection
+ */
 public class FactoryModule extends AbstractModule {
     final EventBus eventBus = EventBus.getDefault();
 

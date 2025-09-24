@@ -3,6 +3,10 @@ package factory;
 import com.google.inject.Singleton;
 import factory.communication.GlobalConstants;
 
+/**
+ * Class that keeps a counter which represents time passing in this system.
+ * Uses specified timeunit in GlobalConstants.TimeFactor
+ */
 @Singleton
 public class TimeService implements TimeServiceInterface {
 

@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.LinkedList;
 
+/**
+ * Class that collects runtimes of individual tasks and prints them out after the simulation finishes
+ */
 @Singleton
 public class LoggingService implements LoggingServiceInterface{
 
@@ -32,17 +35,29 @@ public class LoggingService implements LoggingServiceInterface{
         eventBus.register(this);
     }
 
+    /**
+     * Method reacting to a LogTimeMessage being sent by a DropOffStation after a task is completed. Adds the completion time the log.
+     * @param message incoming message
+     */
     @Subscribe
     public void onLogTimeMessage(LogTimeMessage message){
         timesToCompletion.add(message.getTimeToCompletion());
         PostingService.log("task finished with runtime: " + message.getTimeToCompletion());
     }
 
+    /**
+     * Method reacting to a RunTimeMessage coming from the Scheduler when the last Task is removed from the queue
+     * @param message incoming message
+     */
     @Subscribe
     public void onRunTimeMessage(RunTimeMessage message){
         this.runTime = (double) message.getRunTime();
     }
 
+    /**
+     * Method reacting to a PrintResultMessage coming from the GUI to print the task completion times, total runtime and avg task time
+     * @param message incoming message
+     */
     @Subscribe
     public void onPrintResultsMessage(PrintResultsMessage message){
         StringBuilder result = new StringBuilder("Total runtime: " + runTime + '\n');

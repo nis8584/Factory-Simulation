@@ -2,6 +2,9 @@ package factory.queueAndScheduler;
 
 import java.util.LinkedList;
 
+/**
+ * Class that holds Tasks
+ */
 public class Queue {
     private LinkedList<Task> tasks;
 
