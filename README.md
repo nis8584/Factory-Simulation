@@ -12,11 +12,11 @@ Format: `taskname:step1,step2,...,stepN-anotherTask:step3,step0,....`
 #### A queue consisting of tasks
 Format: `taskname,anotherTask,anotherTask,taskname,....`
 #### Key, factory node type and graphical location
-Format: `KeyTypeX,Y-KeyTypeX,Y-...`\  **note:** Key should be a unique character, Type is either DispenserStation(`d`), WorkStation(`w`), DropOffBox(`b`), X and Y refer to a 5x5 grid in which the stations will be placed for animation purpuses (range 0-4 for each)
+Format: `KeyTypeX,Y-KeyTypeX,Y-...` \  **note:** Key should be a unique character, Type is either DispenserStation(`d`), WorkStation(`w`), DropOffBox(`b`), X and Y refer to a 5x5 grid in which the stations will be placed for animation purpuses (range 0-4 for each)
 #### Connection between nodes
-Format: `fromXtoXtoXto-fromYtoYto`\  **note:** *from* and *to* are the previously established keys (single characters), X and Y are single digit integers depicting the travel cost between stations *from* and *to*
+Format: `fromXtoXtoXto-fromYtoYto` \  **note:** *from* and *to* are the previously established keys (single characters), X and Y are single digit integers depicting the travel cost between stations *from* and *to*
 #### Task and cost specification for workstations
-Format: `keyXstep1:Ystep2-keyYstep2:Xstep3:Ystep56`\ **note:** key as previouls established single character, X and Y as single intigers depicting cost to do the following step
+Format: `keyXstep1:Ystep2-keyYstep2:Xstep3:Ystep56` \ **note:** key as previouls established single character, X and Y as single intigers depicting cost to do the following step
 ### Selecting a level of concurrency
 After successfully loading your facotory you can select the level of concurrency for the simulation. This number selects how many workstations can do work at the same time. If it is set to 2 that then means that the `Scheduler` will send out 2 new tasks at startup and then only send new tasks, once the old ones are finished and on their way to the `DropOffStation`.  
 ### Start the Simulation
