@@ -1,11 +1,11 @@
 package factory.queueAndScheduler;
 
-import java.util.LinkedList;
+import java.util.List;
 
 public class TaskX extends Task{
 
 
-    protected TaskX(LinkedList<String> requiredTasks) {
+    public TaskX(List<String> requiredTasks) {
         super(requiredTasks);
     }
 

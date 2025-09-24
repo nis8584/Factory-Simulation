@@ -2,10 +2,11 @@ package factory.controlledSystem;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import factory.communication.message.SetLayoutMessage;
+import factory.communication.message.SetFactoryMessage;
 import factory.communication.message.WorkStationCostChangeMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.*;
 
@@ -25,15 +26,14 @@ public class Factory implements FactoryInterface{
         eventBus.register(this);
     }
 
-    @Subscribe
+    @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onWorkStationCostChangeMessage (WorkStationCostChangeMessage message){
         calculatePaths();
     }
 
     @Subscribe
-    public void onSetLayoutMessage(SetLayoutMessage message){
+    public void onSetFactoryMessage(SetFactoryMessage message){
         setFactoryNodes(message.getFactoryNodes());
-
     }
 
     public void setFactoryNodes(LinkedList<FactoryNode> factoryNodes) {
@@ -62,9 +62,6 @@ public class Factory implements FactoryInterface{
         return pathTable;
     }
 
-    public List<FactoryNode> getFactoryNodes(){
-        return factoryNodes;
-    }
 
     public DispenserStation getDispenserStation() {
         return dispenserStation;
@@ -78,10 +75,10 @@ public class Factory implements FactoryInterface{
         return FactoryNode.getNodeByChar(k, factoryNodes);
     }
 
-    public List<WorkStation> getAvalibleWorkStations(String s){
+    public List<WorkStation> getAvailableWorkStations(String s){
         List<WorkStation> list = new ArrayList<>();
         for( FactoryNode node : factoryNodes){
-            if(node instanceof WorkStation && ((WorkStation) node).getTypeOfWork().equals(s)){
+            if(node instanceof WorkStation && ((WorkStation) node).getTypesOfWork().containsKey(s)){
                 list.add((WorkStation) node);
             }
         }

@@ -1,36 +1,50 @@
 package factory.queueAndScheduler;
 
-import java.util.LinkedList;
+import factory.TimeService;
+import factory.controlledSystem.FactoryNode;
+
+import java.util.List;
 import java.util.Objects;
 
 public abstract class Task {
 
-    private final LinkedList<String> requiredTasks;
+    private final List<String> requiredTasks;
 
     private  long startTime;
 
-    protected Task(LinkedList<String> requiredTasks) {
+    private FactoryNode currentNodeLocation;
+
+    protected Task(List<String> requiredTasks) {
         this.requiredTasks = requiredTasks;
     }
 
-    public void setStartTime(){
-        startTime = System.currentTimeMillis();
+    public void setStartTime(long time){
+        if(startTime != 0) return;
+        startTime = time;
     }
 
     public double getRunningTime(){
-        long endTime = System.currentTimeMillis();
-        return (double) (endTime - startTime) / 1000;
+        long endTime = TimeService.getTime();
+        return (double) (endTime - startTime);
     }
 
-    public LinkedList<String> getRequiredWorkStations() {
+    public List<String> getRequiredWorkStations() {
         return requiredTasks;
     }
 
-    public boolean doWorkAt(String workDone){
-        return requiredTasks.remove(workDone);
+    public void doWorkAt(){
+        requiredTasks.removeFirst();
     }
     public boolean isTaskDone(){
         return requiredTasks.isEmpty();
+    }
+
+    public FactoryNode getCurrentNodeLocation() {
+        return currentNodeLocation;
+    }
+
+    public void setCurrentNodeLocation(FactoryNode currentNodeLocation) {
+        this.currentNodeLocation = currentNodeLocation;
     }
 
     @Override

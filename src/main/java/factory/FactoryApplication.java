@@ -25,6 +25,7 @@ public class FactoryApplication extends Application {
         FXMLLoaderProvider loaderProvider = injector.getInstance(FXMLLoaderProvider.class);
         scheduler = injector.getInstance(SchedulerInterface.class);
         controllerConnection = (GUIControllerConnection) injector.getInstance(GUIControllerConnectionInterface.class);
+        LoggingService loggingService = (LoggingService) injector.getInstance(LoggingServiceInterface.class);
         FXMLLoader loader = loaderProvider.get();
         loader.setLocation(getClass().getResource("/fxml/MainView.fxml"));
         Scene scene = new Scene(loader.load());

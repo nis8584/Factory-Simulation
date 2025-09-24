@@ -1,5 +1,6 @@
 package factory.controlledSystem;
 
+import factory.communication.message.DoWorkMessage;
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.*;
@@ -15,6 +16,10 @@ public class FactoryNode {
 
     public FactoryNode(char k){
         key = k;
+    }
+
+    public void onDoWorkMessage(DoWorkMessage message){
+
     }
 
 
@@ -125,13 +130,6 @@ public class FactoryNode {
             cost += node.neighbors.get(nextNode);
         }
         return cost;
-    }
-
-    public static boolean alreadyPresentInList(char key, LinkedList<FactoryNode> list){
-        for(FactoryNode node : list){
-            if(node.getKey() == key) return true;
-        }
-        return false;
     }
 
     public static FactoryNode getNodeByChar(char c, LinkedList<FactoryNode> list){
