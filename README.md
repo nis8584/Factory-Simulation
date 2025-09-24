@@ -25,9 +25,9 @@ Now you can start your simulation and watch the dots zip around the factory as t
 Try to not do mistakes in specifying your factory, as current error feedback isn´t that great.
 If the simulation speed is too fast or too slow you can change the time unit in `GlobalConstants`.
 ### Example
-The factory I used for testing and developing is specified like this:
-`auto:drehen,malen-buch:schreiben,drucken`
-`buch,buch,auto,auto,buch,auto,buch,auto,buch,buch`
-`ad0,0-bw0,2-cw2,0-dw0,4-ew4,2-fb4,4-gw2,2`
-`a1b-b1c1d-c1a-d1f1g-f1e-e1c-g1e`
+The factory I used for testing and developing is specified like this:\
+`auto:drehen,malen-buch:schreiben,drucken`\
+`buch,buch,auto,auto,buch,auto,buch,auto,buch,buch`\
+`ad0,0-bw0,2-cw2,0-dw0,4-ew4,2-fb4,4-gw2,2`\
+`a1b-b1c1d-c1a-d1f1g-f1e-e1c-g1e`\
 `b3drehen:2schreiben-c1malen:5drucken-e3drehen:2schreiben-d1malen:5drucken-g1drehen:1drucken`
