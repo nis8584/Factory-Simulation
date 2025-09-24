@@ -34,24 +34,33 @@ decide which goal to focus (cost, efficiency, high Utilization,...) in order to 
 (Evaluation module: calculate current valuation, needs to collect data from WS: WS signals start and end of work?)
 
 since last meeting:
-redid the pathcalc to only run when new or changes,
-added way to notify when changes occur -> this caused me to debug for like 2 hours
-
-did some work on gui for workstation controllers ( now with 100% more sliders)
-
-abstracted up a layer for graphic interface ( at least tried to lol)
-
-tried to make the center gui for different node type more distinct
-
-added cost counter to tasks
-
-task with a next step that cant be done rn get added to the back of the queue. if all tasks cant be done currently the system waits.
-
-added markings to indicate connections between nodes
-
-adjusted synchronization and thread setting to have more desired behavior for running multiple tasks through the system
-
-
+- changed clock to not run on system time + fixed previously unknown issue with resetting timer
+-
 
 Qs:
 do we need multi digit connection costs?
+
+
+next:
+global clock (-> does this fix the weird 5 second stat?)
+visualize which task does what step in which station
+fix the system to be able to do multiple runs after each other (currently some things go wrong -> see: cheapestStation in scheduler == null)
+live update of station costs doesnt work
+stations should have multiple possible tasks at different costs
+switch stations off and on at runtime through gui
+for now: remove change of costs at runtime bc it does not work
+
+
+
+list of steps
+tasks and steps within
+queue
+node + types
+connections
+node possible steps + costs
+
+x:a,b,c-y:a,b,c-z:a,b,c
+XYZXYZXYZXYZ
+adbwcwdb
+a1b-b1c-c1d-d1a (station (cost + toStation)*)
+a3a2b  (station (cost + step)*)

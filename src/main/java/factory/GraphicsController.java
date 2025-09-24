@@ -5,9 +5,11 @@ import factory.communication.GlobalConstants;
 import factory.communication.message.*;
 import factory.communication.PostingService;
 import factory.controlledSystem.*;
-import factory.controllingSystem.WorkStationController;
+import factory.controllingSystem.WorkStationInfoPanel;
 import factory.queueAndScheduler.Queue;
 import factory.queueAndScheduler.FileParser;
+import factory.queueAndScheduler.Task;
+import factory.queueAndScheduler.TaskX;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -15,12 +17,11 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
@@ -40,6 +41,8 @@ public class GraphicsController implements Initializable {
     AnchorPane anchorPane;
     @FXML
     VBox controlPanel;
+    @FXML
+    Slider concurrencySlider;
 
     @Inject
     protected PostingService postingService;
@@ -48,17 +51,17 @@ public class GraphicsController implements Initializable {
 
     private final ObservableList<String> logList = FXCollections.observableArrayList();
 
-    private boolean queueSet = false;
-
-    private boolean layoutSet = false;
-
     private Queue queue;
 
-    private final LinkedList<Polygon> drawnLines = new LinkedList<>();
+    private final LinkedList<Line> drawnLines = new LinkedList<>();
+
+    private Map<String, LinkedList<String>> tasksAndSteps;
 
     public void onButton(ActionEvent actionEvent){
-        postingService.post(new StartWorkSimulation());
+        postingService.post(new DoSchedulingMessage(null));
     }
+
+
 
     public void log(String s){
         logList.add(s);
@@ -88,35 +91,45 @@ public class GraphicsController implements Initializable {
 
         // same as constructor:
         logView.setItems(logList);
+
     }
 
-    public void onLoadQueuePressed(ActionEvent actionEvent) {
+    public void onLoadFactoryAndQueuePressed(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open textfile with queue data");
+        fileChooser.setTitle("Open textfile with factory and queue data");
         File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
         if(selectedFile == null) return;
-        Queue queue = FileParser.parseFileToQueue(selectedFile);
-        postingService.post(new SetQueueMessage(queue));
-
+        FileParser.parseFactoryAndQueue(selectedFile);
     }
 
-    public void onLoadLayoutPressed(ActionEvent actionEvent) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open textfile with layout data");
-        File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
-        if(selectedFile == null) return;
-        LinkedList<FactoryNode> layout = FileParser.parseFileToFactoryNodeSetup(selectedFile);
-        postingService.post(new SetLayoutMessage(layout));
+    public void onPrintStats(ActionEvent actionEvent) {
+        postingService.post(new PrintResultsMessage());
     }
 
+    public void onConcurrencySliderSet(MouseEvent mouseEvent) {
+        postingService.post(new SetConcurrencyMessage((int) concurrencySlider.getValue()));
+    }
 
-    public void onSetLayout(List<FactoryNode> nodes){
-        if(nodes == null) return;
+    private void createTaskButtons(){
+        for(String s: tasksAndSteps.keySet()){
+            Button button = new Button("Add Task: " + s );
+            Task t = new TaskX(tasksAndSteps.get(s));
+            button.setOnAction(actionEvent-> postingService.post(new AddTaskToQueueMessage(t)));
+            button.setPadding(new Insets(8));
+            controlPanel.getChildren().add(button);
+        }
+    }
+
+    public void setFactoryInfo(List<FactoryNode> nodes, Queue queue, Map<String,LinkedList<String>> tasksAndSteps){
+        if(nodes == null || queue == null || tasksAndSteps == null) return;
+        controlPanel.getChildren().clear();
+        this.queue = queue;
+        this.tasksAndSteps = tasksAndSteps;
         Node a = gridPane.getChildren().getFirst();
         Platform.runLater(()->{
             gridPane.getChildren().clear();
             gridPane.getChildren().add(a);
-            for(Polygon p :drawnLines){
+            for(Line p :drawnLines){
                 anchorPane.getChildren().remove(p);
             }
         });
@@ -147,8 +160,15 @@ public class GraphicsController implements Initializable {
         gridPane.layout();
         anchorPane.layout();
         Platform.runLater(()->drawAllLines(nodes));
-        layoutSet = true;
-        checkIfTimeForControlPanel();
+        createTaskButtons();
+        createInfoPanels();
+    }
+    private void createInfoPanels(){
+        for(FactoryNode node: stations.keySet()){
+            if(node instanceof WorkStation){
+                controlPanel.getChildren().add(new WorkStationInfoPanel((WorkStation) node));
+            }
+        }
     }
 
     private void drawAllLines(List<FactoryNode> list){
@@ -160,41 +180,6 @@ public class GraphicsController implements Initializable {
 
         }
     }
-
-    public void setQueue(Queue queue){
-        if(queue == null) return;
-        this.queue = queue;
-        queueSet = true;
-        checkIfTimeForControlPanel();
-    }
-    private void checkIfTimeForControlPanel(){
-        if(queueSet && layoutSet){
-            Platform.runLater(this::setControlPanel);
-        }
-    }
-
-    private void setControlPanel(){
-        controlPanel.getChildren().clear();
-        List<String> typeOfSteps = new LinkedList<>();
-        if(queue.getTasks().isEmpty()) return;
-        queue.getTasks().forEach(task -> typeOfSteps.addAll(task.getRequiredWorkStations()));
-        for(FactoryNode node : stations.keySet()){
-            if(node instanceof WorkStation){
-            Platform.runLater(()-> {
-                try {
-                    controlPanel.getChildren().add(new WorkStationController((WorkStation) node, typeOfSteps.stream().distinct().toList()));
-                } catch (NoSuchFieldException e) {
-                    PostingService.log("Error when creating WorkStationControllers");
-                }
-            });
-            controlPanel.setSpacing(10);
-            controlPanel.setAlignment(Pos.CENTER);
-            controlPanel.layout();
-            }
-        }
-
-    }
-
 
     public void animateMovement(Color color, List<FactoryNode> pathNodes){
         if(pathNodes == null) return;
@@ -230,31 +215,20 @@ public class GraphicsController implements Initializable {
     private void drawLineBetweenNodes(FactoryNode from, FactoryNode to){
         anchorPane.layout();
         gridPane.layout();
-        double fromWidth = stations.get(from).getWidth();
-        double toWidth = stations.get(to).getWidth();
+        double nodeWidthOffSet = stations.get(from).getWidth()/2;
+        double nodeHeightOffSet = stations.get(from).getHeight()/2;
+
         Point2D fromCords = stations.get(from).localToScene(0,0);
         Point2D toCords = stations.get(to).localToScene(0,0);
-        Point2D fromP1 = new Point2D(fromCords.getX()+fromWidth/2-2, fromCords.getY() +fromWidth/2-2);
-        Point2D fromP2 = new Point2D(fromCords.getX()+fromWidth/2+2, fromCords.getY() +fromWidth/2+2);
-        Point2D toP2 = new Point2D(toCords.getX()+toWidth/2-2, toCords.getY() + toWidth/2-2);
-        Point2D toP1 = new Point2D(toCords.getX()+toWidth/2+2, toCords.getY() + toWidth/2+2);
 
+        Line line1 = new Line(fromCords.getX()+nodeWidthOffSet,fromCords.getY()+nodeHeightOffSet,toCords.getX()+nodeWidthOffSet,toCords.getY()+nodeHeightOffSet);
+        line1.setStroke(Color.SANDYBROWN);
+        line1.setStrokeWidth(30);
 
-        double[] points = new double[]{
-                fromCords.getX(), fromCords.getY(),
-                fromCords.getX()+fromWidth, fromCords.getY()+fromWidth,
-                toCords.getX() + toWidth, toCords.getY()+fromWidth,
-                toCords.getX(), toCords.getY()
+        Line line2 = new Line(fromCords.getX()+nodeWidthOffSet,fromCords.getY()+nodeHeightOffSet,toCords.getX()+nodeWidthOffSet,toCords.getY()+nodeHeightOffSet);
+        line2.setStroke(Color.BLACK);
+        line2.setStrokeWidth(5);
 
-        };
-        Polygon line1 = new Polygon(points);
-
-        line1.setFill(Color.SANDYBROWN);
-        line1.setOpacity(60);
-        Polygon line2 = new Polygon();
-        line2.getPoints().addAll(fromP1.getX(), fromP1.getY(),fromP2.getX(),fromP2.getY(), toP1.getX(), toP1.getY(), toP2.getX(), toP2.getY());
-        line2.setFill(Color.BLACK);
-        line2.setOpacity(60);
         anchorPane.getChildren().addFirst(line2);
         anchorPane.getChildren().addFirst(line1);
         drawnLines.add(line1);

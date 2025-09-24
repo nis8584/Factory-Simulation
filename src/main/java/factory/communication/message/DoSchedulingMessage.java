@@ -2,11 +2,12 @@ package factory.communication.message;
 
 import factory.queueAndScheduler.Task;
 
-public class StartWorkSimulation implements Message {
+public class DoSchedulingMessage implements Message{
+
     private final Task task;
 
-    public StartWorkSimulation(Task key) {
-        this.task = key;
+    public DoSchedulingMessage(Task task) {
+        this.task = task;
     }
 
     public Task getTask() {

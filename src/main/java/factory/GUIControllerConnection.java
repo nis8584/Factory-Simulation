@@ -2,10 +2,7 @@ package factory;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import factory.communication.message.AnimateMoveMessage;
-import factory.communication.message.LogMessage;
-import factory.communication.message.SetLayoutMessage;
-import factory.communication.message.SetQueueMessage;
+import factory.communication.message.*;
 import factory.controlledSystem.Factory;
 import factory.controlledSystem.FactoryInterface;
 import org.greenrobot.eventbus.EventBus;
@@ -38,12 +35,7 @@ public class GUIControllerConnection implements GUIControllerConnectionInterface
     }
 
     @Subscribe
-    public void onSetQueue(SetQueueMessage message) {
-        controller.setQueue(message.getQueue());
-    }
-
-    @Subscribe
-    public void onSetLayout(SetLayoutMessage message){
-        controller.onSetLayout(message.getFactoryNodes());
+    public void onSetFactoryMessage(SetFactoryMessage message){
+        controller.setFactoryInfo(message.getFactoryNodes(),message.getQueue(), message.getTasksAndSteps());
     }
 }

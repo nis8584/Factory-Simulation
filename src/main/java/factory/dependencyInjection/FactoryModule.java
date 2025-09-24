@@ -1,8 +1,7 @@
 package factory.dependencyInjection;
 
 import com.google.inject.AbstractModule;
-import factory.GUIControllerConnection;
-import factory.GUIControllerConnectionInterface;
+import factory.*;
 import factory.communication.PostingService;
 import factory.communication.PostingServiceInterface;
 import factory.controlledSystem.Factory;
@@ -22,6 +21,8 @@ public class FactoryModule extends AbstractModule {
         bind(FactoryInterface.class).to(Factory.class);
         bind(SchedulerInterface.class).to(Scheduler.class);
         bind(PostingServiceInterface.class).to(PostingService.class);
+        bind(LoggingServiceInterface.class).to(LoggingService.class);
         bind(GUIControllerConnectionInterface.class).to(GUIControllerConnection.class);
+        bind(TimeServiceInterface.class).to(TimeService.class);
     }
 }

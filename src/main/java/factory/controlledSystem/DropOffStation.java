@@ -1,12 +1,11 @@
 package factory.controlledSystem;
 
 import factory.communication.GlobalConstants;
-import factory.communication.PostingService;
+import factory.communication.message.DoSchedulingMessage;
 import factory.communication.message.DoWorkMessage;
-import factory.communication.message.StartWorkSimulation;
+import factory.communication.message.LogTimeMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 public class DropOffStation extends FactoryNode{
 
@@ -17,18 +16,28 @@ public class DropOffStation extends FactoryNode{
         eventBus.register(this);
     }
 
-    @Subscribe(threadMode = ThreadMode.ASYNC)
+
+    @Subscribe()
     public void onDoWorkMessage(DoWorkMessage message){
-        if(message.getWorkKey()!= key) return;
-        Thread t = new Thread(()->{
-            try {
-                Thread.sleep((long) message.getTravelCost() * GlobalConstants.TimeFactor);
-            } catch (InterruptedException e){
-                throw new RuntimeException(e);
-            }
-            PostingService.log("Task finished. Time to finish: " + message.getTask().getRunningTime());
-            eventBus.post(new StartWorkSimulation());
-        });
-        t.start();
+        if (message.getWorkKey() == getKey()){
+            Thread t = new Thread(()->{
+                try {
+                    Thread.sleep((long) message.getTravelCost() * GlobalConstants.TimeFactor);
+                    eventBus.post(new DoSchedulingMessage(null));
+                    eventBus.post(new LogTimeMessage(message.getTask().getRunningTime()));
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            t.start();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "DropOffStation{" +
+                ", position='" + position + '\'' +
+                ", key=" + key +
+                '}';
     }
 }

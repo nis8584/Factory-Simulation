@@ -1,5 +1,5 @@
 package factory.communication;
 
 public class GlobalConstants {
-    public static final Integer TimeFactor = 1000;
+    public static final Integer TimeFactor = 1500;
 }

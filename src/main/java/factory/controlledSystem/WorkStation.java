@@ -1,67 +1,88 @@
 package factory.controlledSystem;
 
 import factory.communication.GlobalConstants;
-import factory.communication.PostingService;
+import factory.communication.message.DoSchedulingMessage;
 import factory.communication.message.DoWorkMessage;
-import factory.communication.message.SendTaskToNextMessage;
+import factory.communication.message.StatusMessage;
 import factory.communication.message.WorkStationCostChangeMessage;
-import factory.queueAndScheduler.Task;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class WorkStation extends FactoryNode{
 
-    private String typeOfWork;
+    private final Map<String, Integer> typeOfWork = new TreeMap<>();
 
-    private int processingCost = 1;
 
     public WorkStation(char key){
         super(key);
-
         eventBus = EventBus.getDefault();
         eventBus.register(this);
     }
 
-
-    public String getTypeOfWork() {
-        return typeOfWork;
+    public Map<String, Integer> getTypesOfWork() {
+        return Map.copyOf(typeOfWork);
     }
 
-    public void setTypeOfWork(String typeOfWork) {
-        this.typeOfWork = typeOfWork;
-        PostingService.log("Set WorkStation " + key + " to work on: " + typeOfWork);
+    public void addTypeOfWork(String typeOfWork, int cost) {
+        this.typeOfWork.put(typeOfWork, cost);
     }
 
-    public int getProcessingCost() {
-        return processingCost;
+    public int getProcessingCost(String forWork) {
+        return typeOfWork.get(forWork);
     }
 
-    public void setProcessingCost(int processingCost) {
-        this.processingCost = processingCost;
+    public void setProcessingCost(String forWork, int processingCost) {
+        typeOfWork.replace(forWork, processingCost);
         eventBus.post(new WorkStationCostChangeMessage());
     }
 
-    @Subscribe(threadMode = ThreadMode.ASYNC)
+
+
+    public static WorkStation getNodeByChar(char c, LinkedList<FactoryNode> list){
+        for(FactoryNode node : list){
+            if(node.getKey() == c && node instanceof WorkStation) return (WorkStation) node;
+        }
+        return null;
+    }
+
+    @Subscribe
     public void onDoWorkMessage(DoWorkMessage message){
-        synchronized (this){
-            if(message.getWorkKey() != key) return;
-            Task currentTask = message.getTask();
-            if(currentTask.getRequiredWorkStations().getFirst().equals(typeOfWork)){
-                try {
-                    Thread.sleep((long) message.getTravelCost() * GlobalConstants.TimeFactor);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+        if(message.getWorkKey() == this.getKey()){
+            Thread t = new Thread(()->{
+                String currentStep = message.getTask().getRequiredWorkStations().getFirst();
+                if(typeOfWork.containsKey(currentStep)){
+                    try {
+                        giveStatus("waiting for task to arrive");
+                        Thread.sleep((long) message.getTravelCost()  * GlobalConstants.TimeFactor );
+                        giveStatus("working on " + currentStep);
+                        Thread.sleep((long) typeOfWork.get(currentStep) * GlobalConstants.TimeFactor);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    message.getTask().doWorkAt();
+                    giveStatus("idle");
+                    eventBus.post(new DoSchedulingMessage(message.getTask()));
                 }
-                    currentTask.doWorkAt(typeOfWork);
-                try {
-                    Thread.sleep((long) processingCost * GlobalConstants.TimeFactor);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                eventBus.post(new SendTaskToNextMessage(key,currentTask));
-            }
+            });
+            t.start();
         }
     }
 
+    private void giveStatus(String s){
+        eventBus.post(new StatusMessage(s, key));
+    }
+
+    @Override
+    public String toString() {
+        return "WorkStation{" +
+                "typeOfWork='" + typeOfWork + '\'' +
+                ", neighbors=" + neighbors +
+                ", position='" + position + '\'' +
+                ", key=" + key +
+                '}';
+    }
 }

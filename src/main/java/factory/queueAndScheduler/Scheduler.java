@@ -3,7 +3,8 @@ package factory.queueAndScheduler;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
-import factory.communication.PostingService;
+import factory.TimeService;
+import factory.TimeServiceInterface;
 import factory.communication.message.*;
 import factory.controlledSystem.Factory;
 import factory.controlledSystem.FactoryInterface;
@@ -12,6 +13,7 @@ import factory.controlledSystem.WorkStation;
 import javafx.scene.paint.Color;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.*;
 
@@ -24,19 +26,30 @@ public class Scheduler implements SchedulerInterface {
 
     private Queue queue;
 
-    private boolean queuePresent = false;
-    private boolean layoutPresent = false;
-
     private final EventBus eventBus;
 
     private final Factory factory;
 
+    private final TimeService timeService;
+
+    private int concurrentTaskLimit = 1;
+
+    private int currentRunningTasks = 0;
+
+    private final Object chainCounterMutex = new Object();
+
+    private long startTime;
+
+    private boolean started = false;
+
+
     @Inject
-    public Scheduler(EventBus eventBus, Injector injector){
+    public Scheduler(EventBus eventBus, Injector injector, TimeServiceInterface timeService){
         this.factory = (Factory) injector.getInstance(FactoryInterface.class);
         strategy = ScheduleStrategies.FirstInFirstOut;
         this.eventBus = eventBus;
         eventBus.register(this);
+        this.timeService = (TimeService) timeService;
     }
 
 
@@ -49,6 +62,7 @@ public class Scheduler implements SchedulerInterface {
                     nextTask = taskList.getFirst();
 
                 } catch (NoSuchElementException e){
+                    eventBus.post(new RunTimeMessage(TimeService.getTime() - startTime));
                     eventBus.post(new LogMessage("queue is empty!"));
                     return null;
                 }
@@ -70,101 +84,122 @@ public class Scheduler implements SchedulerInterface {
 
     public void addTask(Task task){
         queue.addToQueue(task);
+        if(queue.getTasks().size() == 1){
+            eventBus.post(new DoSchedulingMessage(null));
+        }
     }
 
     public void setStrategy(ScheduleStrategies strategy) {
         this.strategy = strategy;
     }
 
-    @Subscribe
-    public void onSetQueueMessage(SetQueueMessage message){
-        if(message.getQueue() == null) return;
-        queue = message.getQueue();
-        queuePresent = true;
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onAddTaskToQueueMessage(AddTaskToQueueMessage message){
+        message.getTask().setCurrentNodeLocation(factory.getDispenserStation());
+        addTask(message.getTask());
+    }
+
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void setConcurrentTaskLimit(SetConcurrencyMessage message){
+        concurrentTaskLimit = message.getCount();
+        System.out.println(concurrentTaskLimit);
     }
 
     @Subscribe
-    public void onSetLayoutMessage(SetLayoutMessage message){
-        if(message.getFactoryNodes() == null) return;
+    public void onSetFactoryMessage(SetFactoryMessage message){
+        if(message.getFactoryNodes() == null || message.getQueue() == null) return;
+        queue = message.getQueue();
+        started = false;
+        workStationStatus.clear();
         for(FactoryNode fn : message.getFactoryNodes()){
             if(fn instanceof WorkStation){
                 workStationStatus.put((WorkStation) fn,0);
             }
         }
-        layoutPresent = true;
+        queue.getTasks().forEach(t -> t.setCurrentNodeLocation(factory.getDispenserStation()));
     }
 
-    @Subscribe
-    public void onStartSimulation(StartWorkSimulation message){
-        if(!(queuePresent && layoutPresent)) {
-            PostingService.log("first set queue and layout");
+    @Subscribe()
+    public void doScheduling(DoSchedulingMessage message){
+        timeService.start();
+        if(!started){
+            startTime = TimeService.getTime();
+            started = true;
+            currentRunningTasks = 0;
+        }
+        Task t = message.getTask();
+        if(t == null){
+            if(!moreTasksAllowed()) return;
+            t = getNext();
+            synchronized (chainCounterMutex){
+                currentRunningTasks++;
+            }
+        } else {
+            if(t.getCurrentNodeLocation() instanceof  WorkStation){
+                workStationStatus.replace((WorkStation) t.getCurrentNodeLocation(),0);
+            }
+        }
+        if(t == null){
+            //queue empty
+            synchronized (chainCounterMutex){
+                currentRunningTasks--;
+            }
             return;
         }
-        startTask();
-    }
-
-    public void startTask(){
-            Task next = getNext();
-            if(next == null) return;
-            WorkStation cheapestStation = findNextStation(next, factory.getDispenserStation().getKey());
-            if(cheapestStation == null){
-                addTask(next);
-                Thread t = new Thread(()->{
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                PostingService.log("No Workstation suits next step in Task");
-                eventBus.post(new StartWorkSimulation());
-                });
-                t.start();
-                return;
+        if(t.isTaskDone()){
+            moveTaskFromTo(t,t.getCurrentNodeLocation(),factory.getDropOffStation());
+            synchronized (chainCounterMutex){
+                currentRunningTasks--;
             }
-            FactoryNode from = factory.getDispenserStation();
-            LinkedList<FactoryNode> path = factory.getPathTable().get(from.getKey()).get(cheapestStation.getKey());
-
-            next.setStartTime();
-            eventBus.post(new AnimateMoveMessage(path, Color.GREEN));
-            eventBus.post(new DoWorkMessage(next, FactoryNode.costPerPath(path), cheapestStation.getKey()));
-
-    }
-
-    @Subscribe
-    public void onSendTaskToNextMessage(SendTaskToNextMessage message){
-            FactoryNode from = factory.getNodeByKey(message.getKey());
-            FactoryNode to;
-            Task currentTask = message.getTask();
-            workStationStatus.replace((WorkStation) from, 0);
-            if(!currentTask.isTaskDone()){
-                to = findNextStation(currentTask, from.getKey());
+        } else {
+            WorkStation cheapestStation;
+            synchronized (chainCounterMutex){
+            cheapestStation = findBestWorkstation(t, t.getCurrentNodeLocation());
+            }
+            if(cheapestStation != null){
+                moveTaskFromTo(t, t.getCurrentNodeLocation(), cheapestStation);
+                workStationStatus.replace(cheapestStation,1);
             } else {
-                to = factory.getDropOffStation();
+                moveTaskFromTo(t, t.getCurrentNodeLocation(), factory.getDispenserStation());
+                addTask(t);
             }
-            if(to == null) {
-                to = factory.getDispenserStation();
-                addTask(currentTask);
-            }
-            LinkedList<FactoryNode> path = factory.getPathTable().get(from.getKey()).get(to.getKey());
-            eventBus.post(new AnimateMoveMessage(path, Color.GREEN));
-            eventBus.post(new DoWorkMessage(currentTask, FactoryNode.costPerPath(path), to.getKey()));
+        }
+        if(moreTasksAllowed()){
+            eventBus.post(new DoSchedulingMessage(null));
+        }
+    }
+    private void moveTaskFromTo(Task task, FactoryNode from, FactoryNode to){
+        LinkedList<FactoryNode> path = factory.getPathTable().get(from.getKey()).get(to.getKey());      //retrieve precalculated path
+        task.setStartTime(TimeService.getTime());
+        eventBus.post(new AnimateMoveMessage(path, Color.GREEN));                                       //message for graphics
+        to.onDoWorkMessage(new DoWorkMessage(task, FactoryNode.costPerPath(path), to.getKey()));        //message for internal logic
+        task.setCurrentNodeLocation(to);
+
+    }
+    private boolean moreTasksAllowed(){
+        synchronized (chainCounterMutex){
+        return  currentRunningTasks < concurrentTaskLimit;
+        }
     }
 
-    private WorkStation findNextStation(Task task, char from){
-            if(task == null) return null;
-            if(task.getRequiredWorkStations().isEmpty()) return null;
-            List<WorkStation> possibleStations = factory.getAvalibleWorkStations(task.getRequiredWorkStations().getFirst());
-            WorkStation cheapestStation = null;
-            Map<Character, Map<Character, LinkedList<FactoryNode>>> paths = factory.getPathTable();
-        synchronized (this) {
-            for(WorkStation station: possibleStations){
-                if(workStationStatus.get(station) >= 1) continue;
-                if(cheapestStation == null) cheapestStation = station;
-                if(cheapestStation.getProcessingCost() +  FactoryNode.costPerPath(paths.get(from).get(cheapestStation.getKey())) > station.getProcessingCost() + FactoryNode.costPerPath(paths.get(from).get(station.getKey())) && workStationStatus.get(station) == 0) cheapestStation = station;
-            }
-            workStationStatus.replace(cheapestStation,1);
+
+    private WorkStation findBestWorkstation(Task task, FactoryNode from){
+        String nextRequiredStep = task.getRequiredWorkStations().getFirst();
+        WorkStation result = null;
+        for(WorkStation ws: factory.getAvailableWorkStations(nextRequiredStep)){
+            if(workStationStatus.get(ws) > 0) continue;
+            if(result == null){
+                result = ws;
+            } else if (getCostFromTo(from, result) + result.getProcessingCost(nextRequiredStep) > getCostFromTo(from, ws) + ws.getProcessingCost(nextRequiredStep)) result = ws;
+
         }
-        return cheapestStation;
+        return result;
+
     }
+
+    private int getCostFromTo(FactoryNode from, FactoryNode to){
+        return FactoryNode.costPerPath(factory.getPathTable().get(from.getKey()).get(to.getKey()));
+    }
+
 
 }

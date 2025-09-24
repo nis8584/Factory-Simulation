@@ -1,124 +1,65 @@
 package factory.queueAndScheduler;
 
+import factory.LoggingService;
 import factory.communication.PostingService;
+import factory.communication.message.SetFactoryMessage;
 import factory.controlledSystem.DispenserStation;
 import factory.controlledSystem.DropOffStation;
 import factory.controlledSystem.FactoryNode;
 import factory.controlledSystem.WorkStation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FileParser {
+    private static final Logger LOG = LogManager.getLogger(FileParser.class);
 
-    public  static Queue parseFileToQueue(File file){
+    public static void parseFactoryAndQueue(File file){
         try (InputStream in = new FileInputStream(file)){
-
-            String input = readFromInputStream(in);
-            //types of tasks
-            String regex = "[XYZ]*";
-
+            //check if input is in allowed form
+            String input = readFromInputStream(in).toUpperCase();
+            String regex =
+                    "(\\w+:(\\w+,)*\\w+-)*\\w+:(\\w+,)*\\w+\n" +         //definition of tasks + steps of tasks in format (taskname:step,step2,step3-taskname2:....)
+                    "(\\w*,)*\\w*\n" +                                   //queue in format of (task1,task2,task3,task1,task2,task1,task2)
+                    "(\\w\\w\\d,\\d-)*(\\w\\w\\d,\\d)\n" +               //define stationnames + types + location in gui grid in format (stationssymbol stationtype "digit,digit")+
+                    "(\\w(\\d\\w)+-)*(\\w(\\d\\w)+)\n" +                 //define connections between stations in format: (fromStation (cost toStation)+)-...(fromStation(cost toStation)+)
+                    "(\\w(\\d\\w+:)*(\\d\\w+)-)*\\w(\\d\\w+:)*(\\d\\w+)";//define which stations can do which task at which cost in format: (station(cost step)+)-... (station(cost step)+)
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(input.trim().toUpperCase());
-
             if(!matcher.matches()){
-                //some error handeling
-                PostingService.log("Input not matching expectations in: " + file);
-                return null;
+                //some error  handling
+                PostingService.log("Input not matching expectations in: ");
+                return;
             }
-            PostingService.log("successfully loaded queue");
+            String[] inp = input.split("\n");
+            //  get types of steps + which tasks they belong to
+            Map<String,LinkedList<String>> tasksAndSteps = getTasksAndSteps(inp[0]);
+            //assemble to queue
             LinkedList<Task> tasksToDo = new LinkedList<>();
-            for(char c: input.trim().toUpperCase().toCharArray()){
-                LinkedList<String> stops = new LinkedList<>();
-                switch (c){
-                    case 'X':
-                        stops.add("X");
-                        stops.add("Y");
-                        tasksToDo.add(new TaskX(stops));
-                        break;
-                    case 'Y':
-                        stops.add("Y");
-                        stops.add("X");
-                        tasksToDo.add(new TaskX(stops));
-                        break;
+            String[] queueStrings = inp[1].split(",");
+            for(String s: queueStrings){
+                if(!tasksAndSteps.containsKey(s)){
+                    //handle task not predefined
+                    System.out.println("error");
                 }
+                tasksToDo.add(new TaskX(new LinkedList<>(tasksAndSteps.get(s))));
             }
-            return new Queue(tasksToDo);
+            Queue queue = new Queue(tasksToDo);
+            //get nodes + types
+            List<FactoryNode> nodes  = getFactoryNodes(inp[2]);
+            // get connections of nodes between each other
+            createConnections(inp[3], (LinkedList<FactoryNode>) nodes);
+            // get possible work steps and costs per station
+            setStepsAndCost(inp[4], nodes);
+            EventBus.getDefault().post(new SetFactoryMessage((LinkedList<FactoryNode>) nodes, queue, tasksAndSteps));
         } catch (IOException e){
-            //todo do something good with this
-            e.printStackTrace();
+            LOG.error("An error occurred while loading factory data");
         }
-        return null;
-    }
-
-    public static LinkedList<FactoryNode> parseFileToFactoryNodeSetup(File file){
-        try (InputStream in = new FileInputStream(file)){
-            //make sure the input is allowed
-            String input = readFromInputStream(in).trim().toUpperCase();
-
-            //todo: multi digit cost //is it even needed?
-
-            String regex = "(\\w\\w\\d,\\d~)*(\\w\\w\\d,\\d):(\\w(\\d\\w)+-)*(\\w(\\d\\w)+)";
-
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(input);
-
-            if(!matcher.matches()){
-                //some error handling
-                PostingService.log("Input not matching expectations in: " + file);
-                return null;
-            }
-            PostingService.log("successfully loaded Layout");
-            //divide input in list of nodes[0] and node connections[1-length]
-            LinkedList<FactoryNode> nodes = new LinkedList<>();
-            String[] inputArray = input.split("[:-]");
-            //add nodes to list
-            for(String s: inputArray[0].split("~")){
-                if(FactoryNode.alreadyPresentInList(s.charAt(0), nodes)){
-                    //some more error handling
-                    PostingService.log("Duplicate factory node found in input in: " + file);
-                    return null;
-                }
-                FactoryNode node = switch (s.charAt(1)) {
-                    case 'D' -> new DispenserStation(s.charAt(0));
-                    case 'B' -> new DropOffStation(s.charAt(0));
-                    case 'W' -> new WorkStation(s.charAt(0));
-                    default -> null;
-                };
-                if(node == null){
-                    PostingService.log("Input has unknown character in node type specification");
-                    return null;
-                }
-                node.setPosition(s.substring(2));
-                nodes.add(node);
-            }
-            //add connections to nodes
-            for(int i = 1; i<inputArray.length; i++){
-                String connections = inputArray[i];
-                char currentNode = connections.charAt(0);
-                HashMap<FactoryNode, Integer> neighbors = new HashMap<>();
-
-                for(int j = 1; j < connections.length(); j += 2){
-                    if(FactoryNode.getNodeByChar(connections.charAt(j+1),nodes) == null){
-                        //error handling
-                        PostingService.log("Connection specified for node that doesnt exist in : " + file);
-                        return null;
-                    }
-
-                    neighbors.put(FactoryNode.getNodeByChar(connections.charAt(j+1),nodes) ,Integer.valueOf(Character.toString(connections.charAt(j))));
-                }
-                //todo check for null pointers
-                FactoryNode.getNodeByChar(currentNode,nodes).setNeighbors(neighbors);
-            }
-            return nodes;
-        } catch (IOException e){
-            // todo add better logging
-            e.printStackTrace();
-        }
-        return null;
     }
 
     private static String readFromInputStream(InputStream inputStream)
@@ -132,5 +73,62 @@ public class FileParser {
             }
         }
         return resultStringBuilder.toString();
+    }
+
+    public static void main(String[] args){
+
+    }
+    private static Map<String,LinkedList<String>> getTasksAndSteps(String input){
+        Map<String,LinkedList<String>> result = new TreeMap<>();
+        String[] tasks = input.split("-");
+        for(String s: tasks){
+            result.put(s.split(":")[0], new LinkedList<>(List.of(s.split(":")[1].split(","))));
+        }
+        return result;
+    }
+    private static List<FactoryNode> getFactoryNodes(String input) {
+        String[] stations = input.split("-");
+        List<FactoryNode> nodes = new LinkedList<>();
+        for(String s: stations){
+            FactoryNode node = switch (s.charAt(1)) {
+                case 'D' -> new DispenserStation(s.charAt(0));
+                case 'B' -> new DropOffStation(s.charAt(0));
+                case 'W' -> new WorkStation(s.charAt(0));
+                default -> null;
+            };
+            if(node == null) continue;
+            node.setPosition(s.substring(2));
+            nodes.add(node);
+        }
+        return nodes;
+    }
+    private static void createConnections(String rawInput, LinkedList<FactoryNode> nodes){
+        String[] connections = rawInput.split("-");
+        for(String s: connections){
+            FactoryNode node = FactoryNode.getNodeByChar(s.charAt(0), nodes);
+            if(node == null){
+                LOG.error("There seems to be a problem with the connection specification");
+                return;
+            }
+            Map<FactoryNode,Integer> neighbors = new HashMap<>();
+            for(int i = 1; i< s.length(); i+=2){
+                neighbors.put(FactoryNode.getNodeByChar(s.charAt(i+1),nodes) , Integer.valueOf(String.valueOf(s.charAt(i))));
+            }
+            node.setNeighbors(neighbors);
+        }
+    }
+    private static void setStepsAndCost(String rawInput, List<FactoryNode> nodes){
+        String[] stepsAndCosts = rawInput.split("-");
+        for(String s: stepsAndCosts){
+            WorkStation node = WorkStation.getNodeByChar(s.charAt(0), (LinkedList<FactoryNode>) nodes);
+            if(node == null){
+                LOG.error("There seems to be a problem with the workstep and cost specification");
+                return;
+            }
+            String[] a = s.substring(1).split(":");
+            for(String s2: a){
+                node.addTypeOfWork(s2.substring(1),Integer.valueOf(String.valueOf(s2.charAt(0))));
+            }
+        }
     }
 }
