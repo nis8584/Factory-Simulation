@@ -9,6 +9,11 @@ import javafx.scene.layout.*;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+/**
+ * Class that implements a GUI element that shows information about a given WorkStation
+ * @see WorkStation
+ * @see StatusMessage
+ */
 public class WorkStationInfoPanel extends Pane {
 
     Label infoLabel = new Label("idle");

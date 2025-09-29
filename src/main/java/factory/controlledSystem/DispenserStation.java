@@ -4,6 +4,9 @@ import factory.communication.message.DoWorkMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+/**
+ * Class that represents the start point of a tasks' way through the factory. Currently, does nothing.
+ */
 public class DispenserStation extends FactoryNode{
 
     public DispenserStation(char k) {

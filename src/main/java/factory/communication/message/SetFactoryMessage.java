@@ -6,6 +6,13 @@ import factory.queueAndScheduler.Queue;
 import java.util.LinkedList;
 import java.util.Map;
 
+/**
+ * Message that is sent after parsing an input to queue, factory node and task data.
+ *
+ * @see factory.queueAndScheduler.FileParser
+ * @see factory.controlledSystem.Factory
+ * @see factory.queueAndScheduler.Scheduler
+ */
 public class SetFactoryMessage implements Message{
 
     private final LinkedList<FactoryNode> factoryNodes;

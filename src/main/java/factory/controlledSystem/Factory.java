@@ -10,6 +10,9 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.*;
 
+/**
+ * Class that acts as a parent to all nodes in the simulation. Holds data over specific nodes, costs between all connected nodes and provides helper methods for scheduling.
+ */
 @Singleton
 public class Factory implements FactoryInterface{
 
@@ -45,6 +48,10 @@ public class Factory implements FactoryInterface{
         }
         calculatePaths();
     }
+
+    /**
+     * calculates costs between all nodes that are connected
+     */
     private void calculatePaths(){
         pathTable = new TreeMap<>();
         for(FactoryNode fromNode: factoryNodes){
@@ -75,6 +82,12 @@ public class Factory implements FactoryInterface{
         return FactoryNode.getNodeByChar(k, factoryNodes);
     }
 
+    /**
+     * Helper method for scheduling
+     *
+     * @param s String of desired work step
+     * @return List of stations which are able to complete the desired work step
+     */
     public List<WorkStation> getAvailableWorkStations(String s){
         List<WorkStation> list = new ArrayList<>();
         for( FactoryNode node : factoryNodes){

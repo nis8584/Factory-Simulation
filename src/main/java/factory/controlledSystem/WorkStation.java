@@ -7,11 +7,17 @@ import factory.communication.message.StatusMessage;
 import factory.communication.message.WorkStationCostChangeMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Class that represents a real life work station in this simulation.
+ * <p>
+ *     Has types of work and associated costs
+ *     Reacts to DoWorkMessages and "does" the required work(waits for the duration equal to the work cost)
+ * </p>
+ */
 public class WorkStation extends FactoryNode{
 
     private final Map<String, Integer> typeOfWork = new TreeMap<>();
