@@ -2,6 +2,9 @@ package factory.communication.message;
 
 import factory.queueAndScheduler.Task;
 
+/**
+ * Message that notifies a FactoryNode of an incoming Task and its travel cost.
+ */
 public class DoWorkMessage implements Message{
 
     private final Task task;

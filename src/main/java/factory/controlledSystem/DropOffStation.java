@@ -7,11 +7,13 @@ import factory.communication.message.LogTimeMessage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+/**
+ * Class that represents the last stop in a tasks' lifecycle. When a task arrives here, the scheduler is prompted to start another task. Also logs the runtime of the task.
+ */
 public class DropOffStation extends FactoryNode{
 
     public DropOffStation(char key) {
         super(key);
-
         eventBus = EventBus.getDefault();
         eventBus.register(this);
     }

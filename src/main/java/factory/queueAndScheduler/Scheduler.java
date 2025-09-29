@@ -11,14 +11,21 @@ import factory.controlledSystem.FactoryInterface;
 import factory.controlledSystem.FactoryNode;
 import factory.controlledSystem.WorkStation;
 import javafx.scene.paint.Color;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.*;
 
+/**
+ * Class that controls the flow of Tasks throughout the system
+ */
 @Singleton
 public class Scheduler implements SchedulerInterface {
+
+    private static final Logger LOG = LogManager.getLogger(Scheduler.class);
 
     private final Map<WorkStation, Integer> workStationStatus = new HashMap<>();// 0= idle, 1 = busy, 2 = broken?,....
 
@@ -52,7 +59,10 @@ public class Scheduler implements SchedulerInterface {
         this.timeService = (TimeService) timeService;
     }
 
-
+    /**
+     * Method which retrieves the next Task according to the current scheduling strategy
+     * @return Task which is next in order
+     */
     private Task getNext(){
         LinkedList<Task> taskList = queue.getTasks();
         Task nextTask = null;
@@ -82,6 +92,10 @@ public class Scheduler implements SchedulerInterface {
         return nextTask;
     }
 
+    /**
+     * Method that adds a new Task to the queue. If queue was previously empty the scheduler starts work again.
+     * @param task Task to add on top of the queue
+     */
     public void addTask(Task task){
         queue.addToQueue(task);
         if(queue.getTasks().size() == 1){
@@ -89,22 +103,38 @@ public class Scheduler implements SchedulerInterface {
         }
     }
 
+    /**
+     * Currently unused method that changes the current scheduling strategy
+     * @param strategy the new scheduling strategy
+     */
     public void setStrategy(ScheduleStrategies strategy) {
         this.strategy = strategy;
     }
 
+    /**
+     * Method that reacts to an AddTaskToQueueMessage. Adds the contained message to the queue.
+     * @param message incoming message
+     */
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onAddTaskToQueueMessage(AddTaskToQueueMessage message){
         message.getTask().setCurrentNodeLocation(factory.getDispenserStation());
         addTask(message.getTask());
     }
 
+    /**
+     * Method that reacts to a SetConcurrencyMessage. Changes the task limit.
+     * @param message incoming message
+     */
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void setConcurrentTaskLimit(SetConcurrencyMessage message){
         concurrentTaskLimit = message.getCount();
-        System.out.println(concurrentTaskLimit);
+        LOG.info("Set task limit to: {}", concurrentTaskLimit);
     }
 
+    /**
+     * Method that reacts to a SetFactoryMessage. Receives and sets factory data in the Scheduler.
+     * @param message incoming message
+     */
     @Subscribe
     public void onSetFactoryMessage(SetFactoryMessage message){
         if(message.getFactoryNodes() == null || message.getQueue() == null) return;
@@ -119,6 +149,18 @@ public class Scheduler implements SchedulerInterface {
         queue.getTasks().forEach(t -> t.setCurrentNodeLocation(factory.getDispenserStation()));
     }
 
+    /**
+     * Method that does the main work of the scheduler. Reacts to the
+     * <p>
+     *     If the incoming message does not contain a task we assume that we are supposed to start a new one.
+     *     After retrieving a new task successfully it is checked if that task has further required steps that need to be done.
+     *     If there are none, it is sent to the DropOffStation
+     *     If there are, the Scheduler checks for the cheapest station currently availible (lowest sum of travel cost and work cost) and sends the task there
+     *     If there is no cheapest station the task goes back in the queue
+     *     Finally, if it fits into the limit of concurrency, a new DoSchedulingMessage is sent, so that another Task is started
+     * </p>
+     * @param message incoming message
+     */
     @Subscribe()
     public void doScheduling(DoSchedulingMessage message){
         timeService.start();
@@ -168,6 +210,13 @@ public class Scheduler implements SchedulerInterface {
             eventBus.post(new DoSchedulingMessage(null));
         }
     }
+
+    /**
+     * Helper method that sends the required messages to different software components to make the task move in the system
+     * @param task the moved task
+     * @param from starting location
+     * @param to final location
+     */
     private void moveTaskFromTo(Task task, FactoryNode from, FactoryNode to){
         LinkedList<FactoryNode> path = factory.getPathTable().get(from.getKey()).get(to.getKey());      //retrieve precalculated path
         task.setStartTime(TimeService.getTime());
@@ -176,13 +225,24 @@ public class Scheduler implements SchedulerInterface {
         task.setCurrentNodeLocation(to);
 
     }
+
+    /**
+     * Helper method to check whether a new task can be started
+     * @return boolean whether a new task can be started
+     */
     private boolean moreTasksAllowed(){
         synchronized (chainCounterMutex){
         return  currentRunningTasks < concurrentTaskLimit;
         }
     }
 
-
+    /**
+     * Helper method to find the cheapest work station
+     *
+     * @param task task that needs to be completed
+     * @param from starting node for the task
+     * @return the cheapest workstation (lowest sum of travel and work cost)
+     */
     private WorkStation findBestWorkstation(Task task, FactoryNode from){
         String nextRequiredStep = task.getRequiredWorkStations().getFirst();
         WorkStation result = null;
@@ -197,6 +257,12 @@ public class Scheduler implements SchedulerInterface {
 
     }
 
+    /**
+     * Helper method to calculate the cost to get from one node to another
+     * @param from starting node
+     * @param to final node
+     * @return cost to traverse the cheapest path between the two given nodes
+     */
     private int getCostFromTo(FactoryNode from, FactoryNode to){
         return FactoryNode.costPerPath(factory.getPathTable().get(from.getKey()).get(to.getKey()));
     }

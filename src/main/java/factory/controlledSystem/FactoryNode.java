@@ -2,10 +2,13 @@ package factory.controlledSystem;
 
 import factory.communication.message.DoWorkMessage;
 import org.greenrobot.eventbus.EventBus;
-
 import java.util.*;
 
-public class FactoryNode {
+/**
+ * Abstract class that represents a node in a factory in general.
+ * Offers basic data to its inheritors such as GUI position, key, neighbours and eventbus.
+ */
+public abstract class FactoryNode {
     protected Map<FactoryNode, Integer> neighbors = new HashMap<>();
 
     protected String position;
@@ -52,7 +55,6 @@ public class FactoryNode {
                 '}';
     }
 
- //todo consider putting pathfinding in new class maybe also animation class?
     /**
      * Method to recursively find the cheapest path from one FactoryNode to another.
      *

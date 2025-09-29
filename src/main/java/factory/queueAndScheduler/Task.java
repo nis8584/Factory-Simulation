@@ -6,6 +6,9 @@ import factory.controlledSystem.FactoryNode;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Abstract task class that provides generic parameters and methods that are needed for a task
+ */
 public abstract class Task {
 
     private final List<String> requiredTasks;

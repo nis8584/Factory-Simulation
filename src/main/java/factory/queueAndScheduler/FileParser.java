@@ -1,6 +1,5 @@
 package factory.queueAndScheduler;
 
-import factory.LoggingService;
 import factory.communication.PostingService;
 import factory.communication.message.SetFactoryMessage;
 import factory.controlledSystem.DispenserStation;
@@ -10,15 +9,25 @@ import factory.controlledSystem.WorkStation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.greenrobot.eventbus.EventBus;
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Class that converts input text to a queue and a list of FactoryNodes
+ */
 public class FileParser {
     private static final Logger LOG = LogManager.getLogger(FileParser.class);
 
+    /**
+     * main parser method to create factory data
+     * <p>
+     *     first checks validity of input with a regex
+     *     then using various helper methods the input is dissected into a queue, a list of tasks, all FactoryNodes, connections and costs
+     * </p>
+     * @param file selected file in GUI
+     */
     public static void parseFactoryAndQueue(File file){
         try (InputStream in = new FileInputStream(file)){
             //check if input is in allowed form
@@ -45,7 +54,7 @@ public class FileParser {
             for(String s: queueStrings){
                 if(!tasksAndSteps.containsKey(s)){
                     //handle task not predefined
-                    System.out.println("error");
+                    LOG.error("Cannot handle a task that is not specified");
                 }
                 tasksToDo.add(new TaskX(new LinkedList<>(tasksAndSteps.get(s))));
             }
@@ -62,11 +71,15 @@ public class FileParser {
         }
     }
 
+    /**
+     * Helper method to convert text file to String of text
+     * @param inputStream InputStream that is reading the file
+     * @return String of file content
+     */
     private static String readFromInputStream(InputStream inputStream)
             throws IOException {
         StringBuilder resultStringBuilder = new StringBuilder();
-        try (BufferedReader br
-                     = new BufferedReader(new InputStreamReader(inputStream))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
             String line;
             while ((line = br.readLine()) != null) {
                 resultStringBuilder.append(line).append("\n");
@@ -75,9 +88,11 @@ public class FileParser {
         return resultStringBuilder.toString();
     }
 
-    public static void main(String[] args){
-
-    }
+    /**
+     * Helper method that creates a Map of task names pointing to a List of steps for that task
+     * @param input the text row that holds the information
+     * @return Map of tasks and their steps
+     */
     private static Map<String,LinkedList<String>> getTasksAndSteps(String input){
         Map<String,LinkedList<String>> result = new TreeMap<>();
         String[] tasks = input.split("-");
@@ -86,6 +101,12 @@ public class FileParser {
         }
         return result;
     }
+
+    /**
+     * Helper method that creates a List of all FactoryNodes
+     * @param input text row that holds the information about all nodes
+     * @return List of Factory nodes
+     */
     private static List<FactoryNode> getFactoryNodes(String input) {
         String[] stations = input.split("-");
         List<FactoryNode> nodes = new LinkedList<>();
@@ -102,6 +123,12 @@ public class FileParser {
         }
         return nodes;
     }
+
+    /**
+     * Helper method that connects all nodes according to the specified costs in a given String
+     * @param rawInput input String that specifies the connections of a factory
+     * @param nodes a List of nodes that need to be connected
+     */
     private static void createConnections(String rawInput, LinkedList<FactoryNode> nodes){
         String[] connections = rawInput.split("-");
         for(String s: connections){
@@ -117,6 +144,12 @@ public class FileParser {
             node.setNeighbors(neighbors);
         }
     }
+
+    /**
+     * Helper method that sets the possible steps and their associated costs to each workstation
+     * @param rawInput input String that specifies the steps and costs
+     * @param nodes List of nodes that need to have the costs put in
+     */
     private static void setStepsAndCost(String rawInput, List<FactoryNode> nodes){
         String[] stepsAndCosts = rawInput.split("-");
         for(String s: stepsAndCosts){

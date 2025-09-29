@@ -5,6 +5,9 @@ import factory.communication.message.LogMessage;
 import factory.communication.message.Message;
 import org.greenrobot.eventbus.EventBus;
 
+/**
+ * Service that is used to log or post info.
+ */
 public class PostingService implements PostingServiceInterface{
 
     private final EventBus eventBus;

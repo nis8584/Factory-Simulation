@@ -11,6 +11,12 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+/**
+ * Main class for the entire application.
+ * <p>
+ *     creates all needed components and loads the GUI
+ * </p>
+ */
 public class FactoryApplication extends Application {
 
 

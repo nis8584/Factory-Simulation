@@ -99,10 +99,12 @@ public class GraphicsController implements Initializable {
         fileChooser.setTitle("Open textfile with factory and queue data");
         File selectedFile = fileChooser.showOpenDialog(((Node)actionEvent.getSource()).getScene().getWindow());
         if(selectedFile == null) return;
+        //todo verbindung auslagern
         FileParser.parseFactoryAndQueue(selectedFile);
     }
 
     public void onPrintStats(ActionEvent actionEvent) {
+        //todo vllt auslagern
         postingService.post(new PrintResultsMessage());
     }
 
@@ -114,6 +116,7 @@ public class GraphicsController implements Initializable {
         for(String s: tasksAndSteps.keySet()){
             Button button = new Button("Add Task: " + s );
             Task t = new TaskX(tasksAndSteps.get(s));
+            //todo wenn oben dann auch hier ersetzen
             button.setOnAction(actionEvent-> postingService.post(new AddTaskToQueueMessage(t)));
             button.setPadding(new Insets(8));
             controlPanel.getChildren().add(button);
