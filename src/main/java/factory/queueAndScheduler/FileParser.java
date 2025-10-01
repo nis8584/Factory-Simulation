@@ -1,5 +1,6 @@
 package factory.queueAndScheduler;
 
+import factory.communication.GlobalConstants;
 import factory.communication.PostingService;
 import factory.communication.message.SetFactoryMessage;
 import factory.controlledSystem.DispenserStation;
@@ -9,6 +10,7 @@ import factory.controlledSystem.WorkStation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.greenrobot.eventbus.EventBus;
+
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -33,7 +35,7 @@ public class FileParser {
             //check if input is in allowed form
             String input = readFromInputStream(in).toUpperCase();
             String regex =
-                    "(\\w+:(\\w+,)*\\w+-)*\\w+:(\\w+,)*\\w+\n" +         //definition of tasks + steps of tasks in format (taskname:step,step2,step3-taskname2:....)
+                    "(\\w+:(\\w+[,+])*\\w+-)*\\w+:(\\w+[,+])*\\w+\n" +         //definition of tasks + steps of tasks in format (taskname:step,step2,step3-taskname2:....)
                     "(\\w*,)*\\w*\n" +                                   //queue in format of (task1,task2,task3,task1,task2,task1,task2)
                     "(\\w\\w\\d,\\d-)*(\\w\\w\\d,\\d)\n" +               //define stationnames + types + location in gui grid in format (stationssymbol stationtype "digit,digit")+
                     "(\\w(\\d\\w)+-)*(\\w(\\d\\w)+)\n" +                 //define connections between stations in format: (fromStation (cost toStation)+)-...(fromStation(cost toStation)+)
@@ -47,7 +49,7 @@ public class FileParser {
             }
             String[] inp = input.split("\n");
             //  get types of steps + which tasks they belong to
-            Map<String,LinkedList<String>> tasksAndSteps = getTasksAndSteps(inp[0]);
+            Map<String,LinkedList<LinkedList<String>>> tasksAndSteps = getTasksAndSteps(inp[0]);
             //assemble to queue
             LinkedList<Task> tasksToDo = new LinkedList<>();
             String[] queueStrings = inp[1].split(",");
@@ -55,8 +57,9 @@ public class FileParser {
                 if(!tasksAndSteps.containsKey(s)){
                     //handle task not predefined
                     LOG.error("Cannot handle a task that is not specified");
+                }else {
+                    tasksToDo.add(new TaskX(getDeepListCopy(tasksAndSteps.get(s)),s, GlobalConstants.getTaskId()));
                 }
-                tasksToDo.add(new TaskX(new LinkedList<>(tasksAndSteps.get(s))));
             }
             Queue queue = new Queue(tasksToDo);
             //get nodes + types
@@ -70,6 +73,15 @@ public class FileParser {
             LOG.error("An error occurred while loading factory data");
         }
     }
+
+    private static LinkedList<LinkedList<String>> getDeepListCopy(LinkedList<LinkedList<String>> input){
+        LinkedList<LinkedList<String>> result = new LinkedList<>();
+        for(LinkedList<String> list: input){
+            result.add(new LinkedList<>(list));
+        }
+        return result;
+    }
+
 
     /**
      * Helper method to convert text file to String of text
@@ -93,11 +105,17 @@ public class FileParser {
      * @param input the text row that holds the information
      * @return Map of tasks and their steps
      */
-    private static Map<String,LinkedList<String>> getTasksAndSteps(String input){
-        Map<String,LinkedList<String>> result = new TreeMap<>();
+    private static Map<String,LinkedList<LinkedList<String>>> getTasksAndSteps(String input){
+        Map<String,LinkedList<LinkedList<String>>> result = new TreeMap<>();
         String[] tasks = input.split("-");
         for(String s: tasks){
-            result.put(s.split(":")[0], new LinkedList<>(List.of(s.split(":")[1].split(","))));
+            String allSteps = (s.split(":")[1]);
+            List<String> orderedSteps = List.of(allSteps.split(","));
+            LinkedList<LinkedList<String>> subList = new LinkedList<>();
+            for(String steps: orderedSteps){
+                subList.add(new LinkedList<>(List.of(steps.split("\\+"))));
+            }
+            result.put(s.split(":")[0], subList);
         }
         return result;
     }

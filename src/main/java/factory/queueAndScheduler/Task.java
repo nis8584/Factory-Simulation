@@ -2,23 +2,37 @@ package factory.queueAndScheduler;
 
 import factory.TimeService;
 import factory.controlledSystem.FactoryNode;
-
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Abstract task class that provides generic parameters and methods that are needed for a task
  */
 public abstract class Task {
 
-    private final List<String> requiredTasks;
+    private final LinkedList<LinkedList<String>> requiredTasks;
 
     private  long startTime;
 
     private FactoryNode currentNodeLocation;
 
-    protected Task(List<String> requiredTasks) {
+    private final String name;
+
+    private final int id;
+
+    protected Task(LinkedList<LinkedList<String>> requiredTasks, String name, int id) {
         this.requiredTasks = requiredTasks;
+        this.name = name;
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName(){
+        return name;
     }
 
     public void setStartTime(long time){
@@ -31,12 +45,13 @@ public abstract class Task {
         return (double) (endTime - startTime);
     }
 
-    public List<String> getRequiredWorkStations() {
+    public LinkedList<LinkedList<String>> getRequiredWorkStations() {
         return requiredTasks;
     }
 
-    public void doWorkAt(){
-        requiredTasks.removeFirst();
+    public void doWorkAt(Set<String> s){
+        requiredTasks.getFirst().removeAll(s);
+        if(requiredTasks.getFirst().isEmpty()) requiredTasks.removeFirst();
     }
     public boolean isTaskDone(){
         return requiredTasks.isEmpty();

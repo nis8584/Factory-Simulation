@@ -41,8 +41,11 @@
                <padding>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </padding>
+               <children>
+                  <Button mnemonicParsing="false" onAction="#onPrintStats" prefHeight="26.0" prefWidth="87.0" text="print stats" />
+               </children>
             </VBox>
-            <GridPane fx:id="gridPane" alignment="CENTER" gridLinesVisible="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
+            <GridPane fx:id="gridPane" alignment="CENTER" gridLinesVisible="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="843.0" prefWidth="521.0">
               <columnConstraints>
                   <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
                   <ColumnConstraints halignment="CENTER" hgrow="NEVER" minWidth="90.0" prefWidth="0.0" />
@@ -61,10 +64,7 @@
                   <Insets left="32.0" />
                </HBox.margin>
             </GridPane>
-            <Button mnemonicParsing="false" onAction="#onPrintStats" prefHeight="26.0" prefWidth="87.0" text="print stats">
-               <HBox.margin>
-                  <Insets left="128.0" />
-               </HBox.margin></Button>
+            <ListView fx:id="queueInfoPanel" prefHeight="900.0" prefWidth="307.0" />
          </children>
       </HBox>
    </children>

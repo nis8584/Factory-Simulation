@@ -19,15 +19,15 @@ public class SetFactoryMessage implements Message{
 
     private final Queue queue;
 
-    private final Map<String,LinkedList<String>> tasksAndSteps;
+    private final Map<String,LinkedList<LinkedList<String>>> tasksAndSteps;
 
-    public SetFactoryMessage(LinkedList<FactoryNode> factoryNodes, Queue queue, Map<String,LinkedList<String>> tasksAndSteps) {
+    public SetFactoryMessage(LinkedList<FactoryNode> factoryNodes, Queue queue, Map<String,LinkedList<LinkedList<String>>> tasksAndSteps) {
         this.factoryNodes = factoryNodes;
         this.queue = queue;
         this.tasksAndSteps = tasksAndSteps;
     }
 
-    public Map<String, LinkedList<String>> getTasksAndSteps() {
+    public Map<String, LinkedList<LinkedList<String>>> getTasksAndSteps() {
         return tasksAndSteps;
     }
 

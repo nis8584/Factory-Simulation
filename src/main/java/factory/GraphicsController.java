@@ -5,6 +5,7 @@ import factory.communication.GlobalConstants;
 import factory.communication.message.*;
 import factory.communication.PostingService;
 import factory.controlledSystem.*;
+import factory.controllingSystem.QueueInfoPanelElement;
 import factory.controllingSystem.WorkStationInfoPanel;
 import factory.queueAndScheduler.Queue;
 import factory.queueAndScheduler.FileParser;
@@ -43,6 +44,8 @@ public class GraphicsController implements Initializable {
     VBox controlPanel;
     @FXML
     Slider concurrencySlider;
+    @FXML
+    ListView<QueueInfoPanelElement> queueInfoPanel;
 
     @Inject
     protected PostingService postingService;
@@ -55,7 +58,7 @@ public class GraphicsController implements Initializable {
 
     private final LinkedList<Line> drawnLines = new LinkedList<>();
 
-    private Map<String, LinkedList<String>> tasksAndSteps;
+    private Map<String, LinkedList<LinkedList<String>>> tasksAndSteps;
 
     public void onButton(ActionEvent actionEvent){
         postingService.post(new DoSchedulingMessage(null));
@@ -115,15 +118,18 @@ public class GraphicsController implements Initializable {
     private void createTaskButtons(){
         for(String s: tasksAndSteps.keySet()){
             Button button = new Button("Add Task: " + s );
-            Task t = new TaskX(tasksAndSteps.get(s));
             //todo wenn oben dann auch hier ersetzen
-            button.setOnAction(actionEvent-> postingService.post(new AddTaskToQueueMessage(t)));
+            button.setOnAction(actionEvent->{
+                Task t = new TaskX(tasksAndSteps.get(s), s, GlobalConstants.getTaskId());
+                postingService.post(new AddTaskToQueueMessage(t));
+                addTaskInfoPanel(t);
+            });
             button.setPadding(new Insets(8));
             controlPanel.getChildren().add(button);
         }
     }
 
-    public void setFactoryInfo(List<FactoryNode> nodes, Queue queue, Map<String,LinkedList<String>> tasksAndSteps){
+    public void setFactoryInfo(List<FactoryNode> nodes, Queue queue, Map<String,LinkedList<LinkedList<String>>> tasksAndSteps){
         if(nodes == null || queue == null || tasksAndSteps == null) return;
         controlPanel.getChildren().clear();
         this.queue = queue;
@@ -165,7 +171,20 @@ public class GraphicsController implements Initializable {
         Platform.runLater(()->drawAllLines(nodes));
         createTaskButtons();
         createInfoPanels();
+        createTaskInfoPanel(queue);
     }
+
+    private void createTaskInfoPanel(Queue queue){
+        ObservableList<QueueInfoPanelElement> queueInfoPanelElements = FXCollections.observableArrayList();
+        queueInfoPanel.setItems(queueInfoPanelElements);
+        for(Task task: queue.getTasks()){
+            queueInfoPanelElements.add(new QueueInfoPanelElement(task));
+        }
+    }
+    private void addTaskInfoPanel(Task task){
+        queueInfoPanel.getItems().add(new QueueInfoPanelElement(task));
+    }
+
     private void createInfoPanels(){
         for(FactoryNode node: stations.keySet()){
             if(node instanceof WorkStation){

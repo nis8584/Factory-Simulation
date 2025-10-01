@@ -200,13 +200,17 @@ public class Scheduler implements SchedulerInterface {
             }
             if(cheapestStation != null){
                 moveTaskFromTo(t, t.getCurrentNodeLocation(), cheapestStation);
+                for(String s: t.getRequiredWorkStations().getFirst()){
+                    eventBus.post(new TaskStepStatusMessage(t.getId(),s , "starting work"));
+                }
                 workStationStatus.replace(cheapestStation,1);
             } else {
                 moveTaskFromTo(t, t.getCurrentNodeLocation(), factory.getDispenserStation());
                 addTask(t);
             }
         }
-        if(moreTasksAllowed()){
+        //second condition changes timing at which new tasks are sent. with condition present: after last task arrives at dropoffstation without:when last task is on the way to dropoffstation
+        if(moreTasksAllowed() && !t.isTaskDone()){
             eventBus.post(new DoSchedulingMessage(null));
         }
     }
@@ -244,17 +248,29 @@ public class Scheduler implements SchedulerInterface {
      * @return the cheapest workstation (lowest sum of travel and work cost)
      */
     private WorkStation findBestWorkstation(Task task, FactoryNode from){
-        String nextRequiredStep = task.getRequiredWorkStations().getFirst();
+        List<String> nextSteps = task.getRequiredWorkStations().getFirst();
+        List<WorkStation> nextStation = maximizeForTask(task);
         WorkStation result = null;
-        for(WorkStation ws: factory.getAvailableWorkStations(nextRequiredStep)){
-            if(workStationStatus.get(ws) > 0) continue;
+        for(WorkStation node: nextStation){
+            if(workStationStatus.get(node) != 0) continue;
             if(result == null){
-                result = ws;
-            } else if (getCostFromTo(from, result) + result.getProcessingCost(nextRequiredStep) > getCostFromTo(from, ws) + ws.getProcessingCost(nextRequiredStep)) result = ws;
-
+                result = node;
+            } else if(getCostFromTo(from, result) + result.getProcessingCost(nextSteps) > getCostFromTo(from, node) + node.getProcessingCost(nextSteps)) result = node;
         }
         return result;
+    }
 
+    private List<WorkStation> maximizeForTask(Task task){
+        List<String> nextSteps = task.getRequiredWorkStations().getFirst();
+        Map<Integer,List<WorkStation>> results = new HashMap<>();
+        for(WorkStation node: factory.getWorkstations()){
+            Integer count = (int) node.getTypesOfWork().keySet().stream().filter(nextSteps::contains).count();
+            if(!results.containsKey(count)){
+                results.put(count,new LinkedList<>());
+            }
+            results.get(count).add(node);
+        }
+        return results.get(results.keySet().stream().max(Integer::compareTo).get());
     }
 
     /**

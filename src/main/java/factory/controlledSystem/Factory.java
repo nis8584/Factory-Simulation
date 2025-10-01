@@ -78,23 +78,12 @@ public class Factory implements FactoryInterface{
         return dropOffStation;
     }
 
-    public FactoryNode getNodeByKey(char k){
-        return FactoryNode.getNodeByChar(k, factoryNodes);
+    public List<WorkStation> getWorkstations(){
+        List<WorkStation> result = new LinkedList<>();
+        for(FactoryNode node: factoryNodes){
+            if(node instanceof WorkStation) result.add((WorkStation     ) node);
+        }
+        return result;
     }
 
-    /**
-     * Helper method for scheduling
-     *
-     * @param s String of desired work step
-     * @return List of stations which are able to complete the desired work step
-     */
-    public List<WorkStation> getAvailableWorkStations(String s){
-        List<WorkStation> list = new ArrayList<>();
-        for( FactoryNode node : factoryNodes){
-            if(node instanceof WorkStation && ((WorkStation) node).getTypesOfWork().containsKey(s)){
-                list.add((WorkStation) node);
-            }
-        }
-        return list;
-    }
 }

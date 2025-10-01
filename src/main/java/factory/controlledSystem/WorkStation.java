@@ -1,16 +1,13 @@
 package factory.controlledSystem;
 
 import factory.communication.GlobalConstants;
-import factory.communication.message.DoSchedulingMessage;
-import factory.communication.message.DoWorkMessage;
-import factory.communication.message.StatusMessage;
-import factory.communication.message.WorkStationCostChangeMessage;
+import factory.communication.message.*;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 /**
  * Class that represents a real life work station in this simulation.
  * <p>
@@ -41,6 +38,14 @@ public class WorkStation extends FactoryNode{
         return typeOfWork.get(forWork);
     }
 
+    public int getProcessingCost(List<String> forWork){
+        int sum = 0;
+        for(String s: forWork){
+            if(typeOfWork.containsKey(s)) sum += typeOfWork.get(s);
+        }
+        return sum;
+    }
+
     public void setProcessingCost(String forWork, int processingCost) {
         typeOfWork.replace(forWork, processingCost);
         eventBus.post(new WorkStationCostChangeMessage());
@@ -59,23 +64,33 @@ public class WorkStation extends FactoryNode{
     public void onDoWorkMessage(DoWorkMessage message){
         if(message.getWorkKey() == this.getKey()){
             Thread t = new Thread(()->{
-                String currentStep = message.getTask().getRequiredWorkStations().getFirst();
-                if(typeOfWork.containsKey(currentStep)){
+                List<String> currentStep = message.getTask().getRequiredWorkStations().getFirst();
+                if(typeOfWork.keySet().stream().anyMatch(currentStep::contains)){
                     try {
                         giveStatus("waiting for task to arrive");
                         Thread.sleep((long) message.getTravelCost()  * GlobalConstants.TimeFactor );
                         giveStatus("working on " + currentStep);
-                        Thread.sleep((long) typeOfWork.get(currentStep) * GlobalConstants.TimeFactor);
+                        Thread.sleep((long) getWorkTime(currentStep) * GlobalConstants.TimeFactor);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    message.getTask().doWorkAt();
+                    for(String s: currentStep){
+                        eventBus.post(new TaskStepStatusMessage(message.getTask().getId(), s, "finished work"));
+                    }
+                    message.getTask().doWorkAt(typeOfWork.keySet());
                     giveStatus("idle");
                     eventBus.post(new DoSchedulingMessage(message.getTask()));
                 }
             });
             t.start();
         }
+    }
+    private int getWorkTime(List<String> steps){
+        int sum = 0;
+        for(String s: steps){
+            if(typeOfWork.containsKey(s)) sum += typeOfWork.get(s);
+        }
+        return sum;
     }
 
     private void giveStatus(String s){

@@ -54,4 +54,5 @@ public class GUIControllerConnection implements GUIControllerConnectionInterface
     public void onSetFactoryMessage(SetFactoryMessage message){
         controller.setFactoryInfo(message.getFactoryNodes(),message.getQueue(), message.getTasksAndSteps());
     }
+
 }
